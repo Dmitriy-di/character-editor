@@ -34,9 +34,8 @@ export default class CharacterModel {
 
     this.mCharacter = await this.loadModel('CharNormal.glb') // обычное телосложение
     this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mCharacter.position = new Vector3(0, 0, 0)
+    this.mCharacter.position = new Vector3(0, 0.5, -6)
     this.mCharacter.scaling = new Vector3(2.5, 2.5, -2.5)
-    //  this.mCharacter.skeleton.beginAnimation('default', 0, 0, false)
 
     this.mSkinny = await this.loadModel('CharSkinny.glb') // худой
     this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
@@ -61,15 +60,23 @@ export default class CharacterModel {
       // 		newMeshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
       //   }
     )
+
+    //Остановка анимации
+    res.animationGroups[0].stop()
+
+    //Запуск анимации
+    //  res.animationGroups[0].start()
+
     const resMesh = res.meshes[0]
     const MeshSkel = res.skeletons[0]
     resMesh.name = inFilename.replace('.glb', '')
     resMesh.checkCollisions = false
-    resMesh.isPickable = false
+    // Чтобы на модели срабатывало событие onPointerDown/Up
+    resMesh.isPickable = true
     // apply to all children as well
     resMesh.getChildMeshes().forEach((child) => {
       child.checkCollisions = false
-      child.isPickable = false
+      child.isPickable = true
     })
 
     //  if (ConfigEditor.showSkeleton) {
@@ -99,6 +106,7 @@ export default class CharacterModel {
     //  }
     return resMesh
   }
+
   // изменить модель в соответствии с весами
   changeModel(inSkinnyVal, inFatVal, inAthleticVal) {
     console.log(
@@ -136,6 +144,7 @@ export default class CharacterModel {
     // после первого прогона изменений - вершины выставлены в обновляемые
     this.mIsUpdatableVertecies = true
   }
+
   // изменить непосредственно меш с вершинами
   changeMesh(
     inMesh = null,
@@ -216,4 +225,9 @@ export default class CharacterModel {
       )
     }
   }
+
+  // changePartMesh(  inMesh = null) {
+  // 	let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+  // 	const len = positions.length
+  // }
 }
