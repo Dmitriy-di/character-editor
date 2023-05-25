@@ -162,6 +162,13 @@ export default class CharacterModel {
     const positionsS = inMeshS.getVerticesData(VertexBuffer.PositionKind)
     const positionsF = inMeshF.getVerticesData(VertexBuffer.PositionKind)
     const positionsA = inMeshA.getVerticesData(VertexBuffer.PositionKind)
+
+    const { inVal, positionsType } = inSkinnyVal
+      ? { inVal: inSkinnyVal, positionsType: positionsS }
+      : inFatVal
+      ? { inVal: inFatVal, positionsType: positionsF }
+      : { inVal: inAthleticVal, positionsType: positionsA }
+
     if (positions && positionsN && positionsS && positionsF && positionsA) {
       if (
         positionsN.length === len &&
@@ -172,27 +179,34 @@ export default class CharacterModel {
         for (let i = 0; i < positions.length; i += 3) {
           const i2 = i + 1
           const i3 = i2 + 1
-          // сдвигаем к худощавой моделе
+
           positions[i] =
-            positionsN[i] + (positionsS[i] - positionsN[i]) * inSkinnyVal
+            positionsN[i] + (positionsType[i] - positionsN[i]) * inVal
           positions[i2] =
-            positionsN[i2] + (positionsS[i2] - positionsN[i2]) * inSkinnyVal
+            positionsN[i2] + (positionsType[i2] - positionsN[i2]) * inVal
           positions[i3] =
-            positionsN[i3] + (positionsS[i3] - positionsN[i3]) * inSkinnyVal
-          // сдвинутый к худому сдвигаем к толстому
-          positions[i] =
-            positions[i] + (positionsF[i] - positions[i]) * inFatVal
-          positions[i2] =
-            positions[i2] + (positionsF[i2] - positions[i2]) * inFatVal
-          positions[i3] =
-            positions[i3] + (positionsF[i3] - positions[i3]) * inFatVal
-          // сдвинутый к толстому сдвигаем к атлетичному
-          positions[i] =
-            positions[i] + (positionsA[i] - positions[i]) * inAthleticVal
-          positions[i2] =
-            positions[i2] + (positionsA[i2] - positions[i2]) * inAthleticVal
-          positions[i3] =
-            positions[i3] + (positionsA[i3] - positions[i3]) * inAthleticVal
+            positionsN[i3] + (positionsType[i3] - positionsN[i3]) * inVal
+
+          // // сдвигаем к худощавой моделе
+          // positions[i] = positionsN[i] + (positionsS[i] - positionsN[i]) * inSkinnyVal
+          // positions[i2] =
+          //   positionsN[i2] + (positionsS[i2] - positionsN[i2]) * inSkinnyVal
+          // positions[i3] =
+          //   positionsN[i3] + (positionsS[i3] - positionsN[i3]) * inSkinnyVal
+          // // сдвинутый к худому сдвигаем к толстому
+          // positions[i] =
+          //   positions[i] + (positionsF[i] - positions[i]) * inFatVal
+          // positions[i2] =
+          //   positions[i2] + (positionsF[i2] - positions[i2]) * inFatVal
+          // positions[i3] =
+          //   positions[i3] + (positionsF[i3] - positions[i3]) * inFatVal
+          // // сдвинутый к толстому сдвигаем к атлетичному
+          // positions[i] =
+          //   positions[i] + (positionsA[i] - positions[i]) * inAthleticVal
+          // positions[i2] =
+          //   positions[i2] + (positionsA[i2] - positions[i2]) * inAthleticVal
+          // positions[i3] =
+          //   positions[i3] + (positionsA[i3] - positions[i3]) * inAthleticVal
         }
         // нужно новый буффер создать, так как прошлый был не обновляемым
         if (this.mIsUpdatableVertecies)

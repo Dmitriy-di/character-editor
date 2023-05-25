@@ -127,13 +127,13 @@ const handleMouseMove = (event) => {
   let posXY = mouseX - svgRect.width / 2;
   let posZ = mouseY - svgRect.height / 2;
 
-  let x = posXY < 0 ? -posXY / (svgRect.width / 2) : 0;
-  let y = posXY > 0 ? posXY / (svgRect.width / 2) : 0;
   let z = posZ < 0 ? -posZ / (svgRect.height / 2) : 0;
+  let x = posXY < 0 && z == 0 ? -posXY / (svgRect.width / 2) : 0;
+  let y = posXY > 0 && z == 0 ? posXY / (svgRect.width / 2) : 0;
   characterModelGlob.value.changeModel(x, y, z);
-  console.log("x", x);
-  console.log("y", y);
-  console.log("z", z);
+  // console.log("x", x);
+  // console.log("y", y);
+  // console.log("z", z);
 };
 
 onMounted(async () => {
@@ -165,11 +165,11 @@ onMounted(async () => {
   // ground.material = groundMaterial;
 
   await characterModel.build();
-  console.log("red", characterModel.mCharacter.isPickable);
-  console.log("red", characterModel.mSkinny.isPickable);
-  console.log("red", characterModel.mFat.isPickable);
-  console.log("red", characterModel.mAthletic.isPickable);
-  console.log("red", characterModel.mNormal.isPickable);
+  // console.log("red", characterModel.mCharacter.isPickable);
+  // console.log("red", characterModel.mSkinny.isPickable);
+  // console.log("red", characterModel.mFat.isPickable);
+  // console.log("red", characterModel.mAthletic.isPickable);
+  // console.log("red", characterModel.mNormal.isPickable);
 
   const mCharacter = characterModel.mCharacter;
 
@@ -181,66 +181,6 @@ onMounted(async () => {
 
   let isDragging = false; // Флаг для отслеживания состояния перетаскивания
   let pickedPoint = null; // Выбранная точка для перемещения
-
-  scene.onPointerDown = function (event) {
-    if (event.button === 0) {
-      // Проверка нажатия левой кнопки мыши
-
-      let pickResult = scene.pick(event.clientX, event.clientY);
-      pickedPoint = pickResult.pickedPoint;
-      console.log(pickResult.pickedMesh);
-      console.log(pickResult.pickedPoint);
-
-      // Ваш код обработки начала перетаскивания
-      isDragging = true;
-    }
-  };
-
-  scene.onPointerUp = function (event) {
-    if (event.button === 0) {
-      // Проверка отпускания левой кнопки мыши
-      // Ваш код обработки окончания перетаскивания
-      isDragging = false;
-      pickedPoint = null;
-    }
-  };
-
-  scene.onPointerMove = function (event) {
-    if (isDragging && pickedPoint) {
-      let pickResult = scene.pick(event.clientX, event.clientY);
-      let newPoint = pickResult.pickedPoint;
-
-      // Ваш код для перемещения точек модели в определенном радиусе
-      // Вы можете использовать методы изменения позиции меша или его вершин
-
-      // Пример изменения позиции меша
-      let distance = Vector3.Distance(pickedPoint, newPoint);
-      if (distance <= 1) {
-        console.log(mCharacter);
-        // // Изменение позиции меша
-        // mCharacter.position.addInPlace(newPoint.subtract(pickedPoint));
-
-        // // Или изменение позиции вершин меша
-        // let vertices = mCharacter.getVerticesData(VertexBuffer.PositionKind);
-        // for (let i = 0; i < vertices.length; i += 3) {
-        //   let vertex = new Vector3(
-        //     vertices[i],
-        //     vertices[i + 1],
-        //     vertices[i + 2]
-        //   );
-        //   let vertexDistance = Vector3.Distance(pickedPoint, vertex);
-        //   if (vertexDistance <= 1) {
-        //     vertices[i] += newPoint.x - pickedPoint.x;
-        //     vertices[i + 1] += newPoint.y - pickedPoint.y;
-        //     vertices[i + 2] += newPoint.z - pickedPoint.z;
-        //   }
-        // }
-        // mCharacter.updateVerticesData(VertexBuffer.PositionKind, vertices);
-      }
-
-      pickedPoint = newPoint;
-    }
-  };
 
   engine.runRenderLoop(() => {
     scene.render();
