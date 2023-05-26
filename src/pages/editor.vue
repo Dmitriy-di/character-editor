@@ -7,7 +7,7 @@
       touch-action="none"
     ></canvas>
 
-    <q-btn @click="centerSphereCoord">Центр сферы</q-btn>
+    <q-btn @click="centerSphereCoord">Изменить</q-btn>
 
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
@@ -16,14 +16,34 @@
           :points="trianglePoints"
           fill="blue"
         ></polygon>
-        <circle
+
+        <svg
+          @mousedown="startDrag"
+          x="80"
+          y="80"
+          @mousedown.self="startDrag"
+          width="40"
+          height="40"
+          viewBox="0 0 80 69"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M80 34.4817C80 53.2356 62.0914 68.4386 40 68.4386C17.9086 68.4386 0 53.2356 0 34.4817C0 15.7279 17.9086 0.524902 40 0.524902C62.0914 0.524902 80 15.7279 80 34.4817Z"
+            fill="#868686"
+          />
+        </svg>
+
+        <!-- <circle
           :cx="sliderX"
           :cy="sliderY"
           r="10"
           fill="red"
           @mousedown.self="startDrag"
-        ></circle>
+        ></circle> -->
       </svg>
+
+      <!-- <img class="triangle_img" src="../assets/triangleBodyGange.svg" alt="" /> -->
     </div>
   </div>
 </template>
@@ -72,6 +92,7 @@ let offsetY = 0;
 let isDragging = false;
 
 const startDrag = (event) => {
+  console.log(123, event.clientX);
   if (event.button === 0) {
     isDragging = true;
   }
@@ -81,7 +102,6 @@ const handleMouseMove = (event) => {
   if (isDragging) {
     const rect = event.target.getBoundingClientRect();
     //globalPointToChange(rect, event.clienntX, event.clientY)
-    //
     sliderX.value = event.clientX - rect.left;
     sliderY.value = event.clientY - rect.top;
 
@@ -93,11 +113,11 @@ const handleMouseMove = (event) => {
     let x = posXY < 0 && z == 0 ? -posXY / (rect.width / 2) : 0;
     let y = posXY > 0 && z == 0 ? posXY / (rect.width / 2) : 0;
     characterModelGlob.value.changeModel(x, y, z);
-    console.log(x, y, z);
   }
 };
 
-const stopDrag = () => {
+const stopDrag = (event) => {
+  console.log(456, event.clientX);
   isDragging = false;
 };
 
@@ -151,7 +171,7 @@ onMounted(async () => {
   // }, PointerEventTypes.POINTERUP);
 
   //Добавление сферы на сцену
-  sphere = Mesh.CreateSphere(`sphere`, 16, 0.3, scene);
+  sphere = Mesh.CreateSphere(`sphere`, 16, 1, scene);
 
   sphere.position.y = 1;
 
@@ -223,6 +243,12 @@ body {
   height: 200px;
   background-color: lightgray;
 }
+
+// .triangle_img {
+//   position: absolute;
+//   width: 100%;
+//   height: 100%;
+// }
 
 .svg_triangle {
   width: 100%;

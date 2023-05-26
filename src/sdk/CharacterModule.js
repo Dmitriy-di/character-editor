@@ -211,8 +211,6 @@ export default class CharacterModel {
   }
 
   squareDistTwoVertex3D(a, b) {
-    // console.log('center', a)
-    // console.log('point', b)
     return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
   }
 
@@ -250,13 +248,6 @@ export default class CharacterModel {
 
       if (squareDistanceToCenterSphere < squareLocalRadiusSphere) {
         indexesModelInSphere.push(j)
-        // console.log('modelPoint', modelPoint)
-        // console.log('localCenterSphere', localCenterSphere)
-        // console.log(
-        //   '123',
-        //   squareDistanceToCenterSphere,
-        //   squareLocalRadiusSphere,
-        // )
       }
     }
     return indexesModelInSphere
@@ -275,7 +266,6 @@ export default class CharacterModel {
       positions[indexesModelInSphere[j]] *= 1.01
       positions[indexesModelInSphere[j] + 1] *= 1.01
       positions[indexesModelInSphere[j] + 2] *= 1.01
-      // console.log(positions[j], positions[j + 1], positions[j + 2])
     }
 
     if (this.mIsUpdatableVertecies)
