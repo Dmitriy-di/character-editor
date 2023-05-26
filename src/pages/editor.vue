@@ -154,7 +154,6 @@ onMounted(async () => {
   sphere = Mesh.CreateSphere(`sphere`, 16, 0.3, scene);
 
   sphere.position.y = 1;
-  sphere.position.x = 0.5;
 
   // sphere.material = new StandardMaterial("sphere material", scene);
   let material = new StandardMaterial("transparentMaterial", scene);

@@ -203,27 +203,30 @@ export default class CharacterModel {
     )
     const localCenterSphere = Vector3.TransformCoordinates(centerSphere, matrix)
 
-    const distance = Vector3.Distance(localPointOnSphere, localCenterSphere)
-
-    return distance
+    const localRadiusSphere = Vector3.Distance(
+      localPointOnSphere,
+      localCenterSphere,
+    )
+    return localRadiusSphere
   }
 
   squareDistTwoVertex3D(a, b) {
+    // console.log('center', a)
+    // console.log('point', b)
     return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
   }
 
   getIndexesVertexesModelInSphere(sphere, model) {
     let indexesModelInSphere = []
-    const meshes = model.getChildMeshes()
     //!Без clone при срабатывании matrix.invert() модель исчезает
-    const matrix = meshes[0].computeWorldMatrix(true).clone()
+    const matrix = model.computeWorldMatrix(true).clone()
     const invertedMatrix = matrix.invert()
-    let distanceToCenterSphere = null
+    let squareDistanceToCenterSphere = null
     const centerSphere = this.computeCenterSphereCoord(sphere)
     let modelPoint = null
     const squareLocalRadiusSphere =
       this.computeSphereRadiusInLocalCoordSystem(sphere, matrix) ** 2
-    // console.log('localRadiusSphere', squareLocalRadiusSphere)
+    console.log('localRadiusSphere', squareLocalRadiusSphere)
 
     // Преобразование координат центра сферы в координаты относительно координат model
     const localCenterSphere = Vector3.TransformCoordinates(
@@ -231,56 +234,73 @@ export default class CharacterModel {
       invertedMatrix,
     )
 
-    // console.log('localCenterSphere', localCenterSphere)
+    console.log('localCenterSphere', localCenterSphere)
 
-    for (let i = 0; i < meshes.length; i++) {
-      let positionsModel = meshes[i].getVerticesData(VertexBuffer.PositionKind)
+    let positionsModel = model.getVerticesData(VertexBuffer.PositionKind)
+    for (let j = 0, length = positionsModel.length; j < length; j += 3) {
+      modelPoint = {
+        x: positionsModel[j],
+        y: positionsModel[j + 1],
+        z: positionsModel[j + 2],
+      }
+      squareDistanceToCenterSphere = this.squareDistTwoVertex3D(
+        localCenterSphere,
+        modelPoint,
+      )
 
-      for (let j = 0, length = positionsModel.length; j < length; j += 3) {
-        modelPoint = {
-          x: positionsModel[j],
-          y: positionsModel[j + 1],
-          z: positionsModel[j + 2],
-        }
-        distanceToCenterSphere = this.squareDistTwoVertex3D(
-          localCenterSphere,
-          modelPoint,
-        )
-
-        if (distanceToCenterSphere < squareLocalRadiusSphere) {
-          indexesModelInSphere.push(j)
-        }
+      if (squareDistanceToCenterSphere < squareLocalRadiusSphere) {
+        indexesModelInSphere.push(j)
+        // console.log('modelPoint', modelPoint)
+        // console.log('localCenterSphere', localCenterSphere)
+        // console.log(
+        //   '123',
+        //   squareDistanceToCenterSphere,
+        //   squareLocalRadiusSphere,
+        // )
       }
     }
     return indexesModelInSphere
   }
 
-  changePartMeshInSphere(sphere, model) {
+  changePartModelInSphere(sphere, inMesh = null) {
     const indexesModelInSphere = this.getIndexesVertexesModelInSphere(
       sphere,
-      model,
+      inMesh,
     )
-    // const meshes = model.getChildMeshes()
     console.log('Индексы внутри сферы', indexesModelInSphere)
 
-    const positions = this.mCharacter.getChildMeshes()[0]
-    // for (let i = 0; i < meshes.length; i++) {
-    //   let positionsModel = meshes[i].getVerticesData(VertexBuffer.PositionKind)
+    let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
 
-    //   for (let j = 0, length = 1000; j < length; j++) {
-    //     positionsModel[j] = positionsModel[j] + 40
-    //     positionsModel[j + 1] += 40
-    //     positionsModel[j + 2] += 40
-    //   }
-    // }
+    for (let j = 0, len = indexesModelInSphere.length; j < len; j++) {
+      positions[indexesModelInSphere[j]] *= 1.01
+      positions[indexesModelInSphere[j] + 1] *= 1.01
+      positions[indexesModelInSphere[j] + 2] *= 1.01
+      // console.log(positions[j], positions[j + 1], positions[j + 2])
+    }
 
-    for (let i = 0; i < positions.length; i += 3) {
-      const i2 = i + 1
-      const i3 = i2 + 1
+    if (this.mIsUpdatableVertecies)
+      inMesh.updateVerticesData(
+        VertexBuffer.PositionKind,
+        positions,
+        true,
+        true,
+      )
+    else inMesh.setVerticesData(VertexBuffer.PositionKind, positions, true)
+    //   I think the problem is that updateVerticesData returns early without doing anything if the buffer doesn’t exist already or if it isn’t updatable, but if you use setVerticesData it will create a new buffer for you and set it regardless. Try doing it like below.
+    //  inSubMesh.updateVerticesData(VertexBuffer.PositionKind, positions);
 
-      positions[i] += 40
-      positions[i2] += 40
-      positions[i3] += 40
+    const meshes = inMesh.getChildMeshes()
+
+    for (let j = 0, len = meshes.length; j < len; j++) {
+      this.changePartModelInSphere(meshes[j])
+    }
+  }
+
+  changePartMeshInSphere(sphere, model) {
+    const meshes = model.getChildMeshes()
+
+    for (let i = 0; i < meshes.length; i++) {
+      this.changePartModelInSphere(sphere, meshes[i])
     }
   }
 }
