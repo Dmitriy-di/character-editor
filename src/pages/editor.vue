@@ -10,7 +10,7 @@
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
         <polygon
-          @mousemove="handleMouseMove"
+          @mousemove.self="handleMouseMove"
           :points="trianglePoints"
           fill="blue"
         ></polygon>
@@ -19,7 +19,7 @@
           :cy="sliderY"
           r="10"
           fill="red"
-          @mousedown="startDrag"
+          @mousedown.self="startDrag"
         ></circle>
       </svg>
     </div>
@@ -69,14 +69,7 @@ let isDragging = false;
 
 const startDrag = (event) => {
   if (event.button === 0) {
-    console.log(1);
-    const circle = event.target;
-    if (circle.tagName === "circle") {
-      isDragging = true;
-      const rect = circle.getBoundingClientRect();
-      offsetX = event.clientX - rect.left - sliderX.value;
-      offsetY = event.clientY - rect.top - sliderY.value;
-    }
+    isDragging = true;
   }
 };
 
@@ -99,7 +92,6 @@ const handleMouseMove = (event) => {
 
 const stopDrag = () => {
   isDragging = false;
-  console.log(3);
 };
 
 onMounted(async () => {
