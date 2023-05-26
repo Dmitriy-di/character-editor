@@ -34,8 +34,8 @@ export default class CharacterModel {
 
     this.mCharacter = await this.loadModel('CharNormal.glb') // обычное телосложение
     this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mCharacter.position = new Vector3(0, 0.5, -6)
-    this.mCharacter.scaling = new Vector3(2.5, 2.5, -2.5)
+    this.mCharacter.position = new Vector3(0, 0, 0)
+    this.mCharacter.scaling = new Vector3(3.5, 3.5, -3.5)
 
     this.mSkinny = await this.loadModel('CharSkinny.glb') // худой
     this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
@@ -51,11 +51,27 @@ export default class CharacterModel {
   }
   // подгрузить модель персонажа
   async loadModel(inFilename) {
+    // let res = null
+
+    // if (inFilename == 'CharNormal.glb') {
+    //   res = await SceneLoader.ImportMeshAsync(
+    //     '',
+    //     'assets/',
+    //     inFilename,
+    //     this.mScene,
+    //     // 	function(newMeshes){
+    //     // 		newMeshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+    //     //   }
+    //   )
+    //   console.log(1, res)
+    // } else {
+    //   res = await SceneLoader.AppendAsync('assets/', inFilename, this.mScene)
+    // }
+
     const res = await SceneLoader.ImportMeshAsync(
       '',
       'assets/',
       inFilename,
-      this.mScene,
       // 	function(newMeshes){
       // 		newMeshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
       //   }
@@ -78,6 +94,7 @@ export default class CharacterModel {
       child.checkCollisions = false
       child.isPickable = true
     })
+    console.log(123, resMesh.getChildMeshes())
 
     //  if (ConfigEditor.showSkeleton) {
     //    //DEBUG STUFF!
