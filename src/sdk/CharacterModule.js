@@ -1,10 +1,8 @@
 import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh'
 import { Scene } from '@babylonjs/core/scene'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
-// import ConfigEditor from "./ConfigEditor";
 import { SkeletonViewer } from '@babylonjs/core/Debug/skeletonViewer'
 import { Space, Vector3, VertexBuffer } from '@babylonjs/core'
-// import MathUtils from "../utils/MathUtils";
 
 // редактируемая модель персонажа
 export default class CharacterModel {
@@ -24,57 +22,38 @@ export default class CharacterModel {
   async build() {
     this.mNormal = await this.loadModel('CharNormal.glb') // обычное телосложение
     this.mNormal.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mNormal.position = new Vector3(-4, 0, 0)
-    this.mNormal.scaling = new Vector3(2, 2, -2)
+    // this.mNormal.position = new Vector3(-4, 0, 0)
+    this.mNormal.scaling = new Vector3(0, 0, 0)
 
     this.mAthletic = await this.loadModel('CharAthletic.glb') // накачанный
     this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mAthletic.position = new Vector3(-2, 0, 0)
-    this.mAthletic.scaling = new Vector3(2, 2, -2)
+    this.mAthletic.scaling = new Vector3(0, 0, 0)
 
     this.mCharacter = await this.loadModel('CharNormal.glb') // обычное телосложение
-    this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mCharacter.position = new Vector3(0, 0, 0)
-    this.mCharacter.scaling = new Vector3(3.5, 3.5, -3.5)
+    // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
+    // this.mCharacter.position = new Vector3(0, 0, 0)
 
     this.mSkinny = await this.loadModel('CharSkinny.glb') // худой
     this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mSkinny.position = new Vector3(2, 0, 0)
-    this.mSkinny.scaling = new Vector3(2, 2, -2)
+    // this.mSkinny.position = new Vector3(2, 0, 0)
+    this.mSkinny.scaling = new Vector3(0, 0, 0)
 
     this.mFat = await this.loadModel('CharFat.glb') // жирный
     this.mFat.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mFat.position = new Vector3(4, 0, 0)
-    this.mFat.scaling = new Vector3(2, 2, -2)
+    // this.mFat.position = new Vector3(4, 0, 0)
+    this.mFat.scaling = new Vector3(0, 0, -0)
 
     this.mIsUpdatableVertecies = false
   }
+
   // подгрузить модель персонажа
   async loadModel(inFilename) {
-    // let res = null
-
-    // if (inFilename == 'CharNormal.glb') {
-    //   res = await SceneLoader.ImportMeshAsync(
-    //     '',
-    //     'assets/',
-    //     inFilename,
-    //     this.mScene,
-    //     // 	function(newMeshes){
-    //     // 		newMeshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
-    //     //   }
-    //   )
-    //   console.log(1, res)
-    // } else {
-    //   res = await SceneLoader.AppendAsync('assets/', inFilename, this.mScene)
-    // }
-
     const res = await SceneLoader.ImportMeshAsync(
       '',
       'assets/',
       inFilename,
-      // 	function(newMeshes){
-      // 		newMeshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
-      //   }
+      this.mScene,
     )
 
     //Остановка анимации
@@ -94,50 +73,12 @@ export default class CharacterModel {
       child.checkCollisions = false
       child.isPickable = true
     })
-    console.log(123, resMesh.getChildMeshes())
 
-    //  if (ConfigEditor.showSkeleton) {
-    //    //DEBUG STUFF!
-    //    let options = {
-    //      pauseAnimations: false,
-    //      returnToRest: false,
-    //      computeBonesUsingShaders: true,
-    //      useAllBones: true,
-    //      displayMode: SkeletonViewer.DISPLAY_SPHERE_AND_SPURS,
-    //      displayOptions: {
-    //        sphereBaseSize: 10,
-    //        sphereScaleUnit: 100,
-    //        sphereFactor: 0.9,
-    //        midStep: 0.25,
-    //        midStepFactor: 0.05
-    //      }
-    //    };
-    //    let skeletonView = new SkeletonViewer(
-    //      MeshSkel,
-    //      resMesh,
-    //      this.mScene,
-    //      false, //autoUpdateBoneMatrices?
-    //      0,  // renderingGroup
-    //      options
-    //    );
-    //  }
     return resMesh
   }
 
   // изменить модель в соответствии с весами
   changeModel(inSkinnyVal, inFatVal, inAthleticVal) {
-    console.log(
-      'inSkinnyVal = ' +
-        inSkinnyVal +
-        '; inFatVal = ' +
-        inFatVal +
-        '; inAthleticVal = ' +
-        inAthleticVal,
-    )
-    //  const sVal = MathUtils.clamp(inSkinnyVal);
-    //  const fVal = MathUtils.clamp(inFatVal);
-    //  const aVal = MathUtils.clamp(inAthleticVal);
-
     const sVal = inSkinnyVal
     const fVal = inFatVal
     const aVal = inAthleticVal
@@ -175,11 +116,13 @@ export default class CharacterModel {
   ) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
     const len = positions.length
+    //! Убрать получение массивов координат всех моделей, на получение массива координат только нужной модели
     const positionsN = inMeshN.getVerticesData(VertexBuffer.PositionKind)
     const positionsS = inMeshS.getVerticesData(VertexBuffer.PositionKind)
     const positionsF = inMeshF.getVerticesData(VertexBuffer.PositionKind)
     const positionsA = inMeshA.getVerticesData(VertexBuffer.PositionKind)
 
+    // inVal - модель, в сторону которой меняется текущая модель, positionType - массив координат вершин модели inVal
     const { inVal, positionsType } = inSkinnyVal
       ? { inVal: inSkinnyVal, positionsType: positionsS }
       : inFatVal
@@ -203,27 +146,6 @@ export default class CharacterModel {
             positionsN[i2] + (positionsType[i2] - positionsN[i2]) * inVal
           positions[i3] =
             positionsN[i3] + (positionsType[i3] - positionsN[i3]) * inVal
-
-          // // сдвигаем к худощавой моделе
-          // positions[i] = positionsN[i] + (positionsS[i] - positionsN[i]) * inSkinnyVal
-          // positions[i2] =
-          //   positionsN[i2] + (positionsS[i2] - positionsN[i2]) * inSkinnyVal
-          // positions[i3] =
-          //   positionsN[i3] + (positionsS[i3] - positionsN[i3]) * inSkinnyVal
-          // // сдвинутый к худому сдвигаем к толстому
-          // positions[i] =
-          //   positions[i] + (positionsF[i] - positions[i]) * inFatVal
-          // positions[i2] =
-          //   positions[i2] + (positionsF[i2] - positions[i2]) * inFatVal
-          // positions[i3] =
-          //   positions[i3] + (positionsF[i3] - positions[i3]) * inFatVal
-          // // сдвинутый к толстому сдвигаем к атлетичному
-          // positions[i] =
-          //   positions[i] + (positionsA[i] - positions[i]) * inAthleticVal
-          // positions[i2] =
-          //   positions[i2] + (positionsA[i2] - positions[i2]) * inAthleticVal
-          // positions[i3] =
-          //   positions[i3] + (positionsA[i3] - positions[i3]) * inAthleticVal
         }
         // нужно новый буффер создать, так как прошлый был не обновляемым
         if (this.mIsUpdatableVertecies)
@@ -257,8 +179,108 @@ export default class CharacterModel {
     }
   }
 
-  // changePartMesh(  inMesh = null) {
-  // 	let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
-  // 	const len = positions.length
+  computeCenterSphereCoord(sphere) {
+    return sphere.position
+  }
+
+  // computeCenterSphereCoord(sphere) {
+  //   const positions = sphere.getVerticesData(VertexBuffer.PositionKind)
+  //   const vertex = new Vector3(positions[0], positions[1], positions[2])
+  //   const distance = Vector3.Distance(vertex, sphere.position)
+  //   return distance
   // }
+
+  computeSphereRadiusInLocalCoordSystem(sphere, matrix) {
+    const positions = sphere.getVerticesData(VertexBuffer.PositionKind)
+
+    const pointOnSphere = new Vector3(positions[0], positions[1], positions[2])
+    //При создании сферы её центр находится в (0,0,0) и при смещении центра не меняется массив positions, поэтому делаем так
+    const centerSphere = new Vector3(0, 0, 0)
+
+    const localPointOnSphere = Vector3.TransformCoordinates(
+      pointOnSphere,
+      matrix,
+    )
+    const localCenterSphere = Vector3.TransformCoordinates(centerSphere, matrix)
+
+    const distance = Vector3.Distance(localPointOnSphere, localCenterSphere)
+
+    return distance
+  }
+
+  squareDistTwoVertex3D(a, b) {
+    return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
+  }
+
+  getIndexesVertexesModelInSphere(sphere, model) {
+    let indexesModelInSphere = []
+    const meshes = model.getChildMeshes()
+    //!Без clone при срабатывании matrix.invert() модель исчезает
+    const matrix = meshes[0].computeWorldMatrix(true).clone()
+    const invertedMatrix = matrix.invert()
+    let distanceToCenterSphere = null
+    const centerSphere = this.computeCenterSphereCoord(sphere)
+    let modelPoint = null
+    const squareLocalRadiusSphere =
+      this.computeSphereRadiusInLocalCoordSystem(sphere, matrix) ** 2
+    // console.log('localRadiusSphere', squareLocalRadiusSphere)
+
+    // Преобразование координат центра сферы в координаты относительно координат model
+    const localCenterSphere = Vector3.TransformCoordinates(
+      centerSphere,
+      invertedMatrix,
+    )
+
+    // console.log('localCenterSphere', localCenterSphere)
+
+    for (let i = 0; i < meshes.length; i++) {
+      let positionsModel = meshes[i].getVerticesData(VertexBuffer.PositionKind)
+
+      for (let j = 0, length = positionsModel.length; j < length; j += 3) {
+        modelPoint = {
+          x: positionsModel[j],
+          y: positionsModel[j + 1],
+          z: positionsModel[j + 2],
+        }
+        distanceToCenterSphere = this.squareDistTwoVertex3D(
+          localCenterSphere,
+          modelPoint,
+        )
+
+        if (distanceToCenterSphere < squareLocalRadiusSphere) {
+          indexesModelInSphere.push(j)
+        }
+      }
+    }
+    return indexesModelInSphere
+  }
+
+  changePartMeshInSphere(sphere, model) {
+    const indexesModelInSphere = this.getIndexesVertexesModelInSphere(
+      sphere,
+      model,
+    )
+    // const meshes = model.getChildMeshes()
+    console.log('Индексы внутри сферы', indexesModelInSphere)
+
+    const positions = this.mCharacter.getChildMeshes()[0]
+    // for (let i = 0; i < meshes.length; i++) {
+    //   let positionsModel = meshes[i].getVerticesData(VertexBuffer.PositionKind)
+
+    //   for (let j = 0, length = 1000; j < length; j++) {
+    //     positionsModel[j] = positionsModel[j] + 40
+    //     positionsModel[j + 1] += 40
+    //     positionsModel[j + 2] += 40
+    //   }
+    // }
+
+    for (let i = 0; i < positions.length; i += 3) {
+      const i2 = i + 1
+      const i3 = i2 + 1
+
+      positions[i] += 40
+      positions[i2] += 40
+      positions[i3] += 40
+    }
+  }
 }

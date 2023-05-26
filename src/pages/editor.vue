@@ -7,6 +7,8 @@
       touch-action="none"
     ></canvas>
 
+    <q-btn @click="centerSphereCoord">Центр сферы</q-btn>
+
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
         <polygon
@@ -28,9 +30,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch } from "vue";
-
-// import * as BABYLON from "babylonjs";
-// import "@babylonjs/loaders";
 import {
   ArcRotateCamera,
   FreeCamera,
@@ -38,6 +37,10 @@ import {
   AnimationPropertiesOverride,
   Animation,
   Mesh,
+  PointerEventTypes,
+  ActionManager,
+  VertexBuffer,
+  GizmoManager,
 } from "@babylonjs/core";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -59,7 +62,8 @@ const { pages } = defineProps({
 
 const renderCanvas = ref(null);
 const characterModelGlob = ref();
-
+const gizmoManager = ref(null);
+let sphere = null;
 const trianglePoints = ref("100,0 0,200 200,200");
 const sliderX = ref(100);
 const sliderY = ref(100);
@@ -76,6 +80,8 @@ const startDrag = (event) => {
 const handleMouseMove = (event) => {
   if (isDragging) {
     const rect = event.target.getBoundingClientRect();
+    //globalPointToChange(rect, event.clienntX, event.clientY)
+    //
     sliderX.value = event.clientX - rect.left;
     sliderY.value = event.clientY - rect.top;
 
@@ -87,11 +93,19 @@ const handleMouseMove = (event) => {
     let x = posXY < 0 && z == 0 ? -posXY / (rect.width / 2) : 0;
     let y = posXY > 0 && z == 0 ? posXY / (rect.width / 2) : 0;
     characterModelGlob.value.changeModel(x, y, z);
+    console.log(x, y, z);
   }
 };
 
 const stopDrag = () => {
   isDragging = false;
+};
+
+const centerSphereCoord = () => {
+  characterModelGlob.value.changePartMeshInSphere(
+    sphere,
+    characterModelGlob.value.mCharacter
+  );
 };
 
 onMounted(async () => {
@@ -115,8 +129,8 @@ onMounted(async () => {
 
   camera.attachControl(canvas, true);
 
-  camera.lowerRadiusLimit = 10;
-  camera.upperRadiusLimit = 20;
+  camera.lowerRadiusLimit = 3;
+  camera.upperRadiusLimit = 5;
 
   const light = new DirectionalLight("light", new Vector3(0, 0, 1), scene);
   const light2 = new DirectionalLight("light", new Vector3(0, 0, -1), scene);
@@ -131,6 +145,27 @@ onMounted(async () => {
   await characterModel.build();
 
   console.log("mCharacter", characterModel.mCharacter);
+
+  // scene.onPointerObservable.add(function (evt) {
+  //   console.log(evt.pickInfo.pickedMesh);
+  // }, PointerEventTypes.POINTERUP);
+
+  //Добавление сферы на сцену
+  sphere = Mesh.CreateSphere(`sphere`, 16, 0.3, scene);
+
+  sphere.position.y = 1;
+  sphere.position.x = 0.5;
+
+  // sphere.material = new StandardMaterial("sphere material", scene);
+  let material = new StandardMaterial("transparentMaterial", scene);
+  material.alpha = 0.3; // Установка прозрачности (от 0 до 1)
+  sphere.material = material;
+
+  sphere.actionManager = new ActionManager(scene);
+  sphere.material.diffuseColor = Color3.Blue();
+  gizmoManager.value = new GizmoManager(scene);
+  gizmoManager.value.boundingBoxGizmoEnabled = true;
+  gizmoManager.value.attachableMeshes = [sphere];
 
   engine.runRenderLoop(() => {
     scene.render();
