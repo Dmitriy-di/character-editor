@@ -7,7 +7,7 @@
       touch-action="none"
     ></canvas>
 
-    <q-btn @click="centerSphereCoord">Изменить</q-btn>
+    <q-btn @click="changeModel">Изменить</q-btn>
 
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
@@ -17,7 +17,7 @@
           fill="blue"
         ></polygon>
 
-        <svg
+        <!-- <svg
           @mousedown="startDrag"
           x="80"
           y="80"
@@ -32,15 +32,15 @@
             d="M80 34.4817C80 53.2356 62.0914 68.4386 40 68.4386C17.9086 68.4386 0 53.2356 0 34.4817C0 15.7279 17.9086 0.524902 40 0.524902C62.0914 0.524902 80 15.7279 80 34.4817Z"
             fill="#868686"
           />
-        </svg>
+        </svg> -->
 
-        <!-- <circle
+        <circle
           :cx="sliderX"
           :cy="sliderY"
           r="10"
           fill="red"
           @mousedown.self="startDrag"
-        ></circle> -->
+        ></circle>
       </svg>
 
       <!-- <img class="triangle_img" src="../assets/triangleBodyGange.svg" alt="" /> -->
@@ -75,6 +75,7 @@ import "@babylonjs/loaders";
 import "@babylonjs/inspector";
 import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader";
 import CharacterModel from "../sdk/CharacterModule";
+import { Tools } from "@babylonjs/inspector/tools";
 
 const { pages } = defineProps({
   pages: Array,
@@ -92,7 +93,6 @@ let offsetY = 0;
 let isDragging = false;
 
 const startDrag = (event) => {
-  console.log(123, event.clientX);
   if (event.button === 0) {
     isDragging = true;
   }
@@ -112,16 +112,16 @@ const handleMouseMove = (event) => {
     let z = posZ < 0 ? -posZ / (rect.height / 2) : 0;
     let x = posXY < 0 && z == 0 ? -posXY / (rect.width / 2) : 0;
     let y = posXY > 0 && z == 0 ? posXY / (rect.width / 2) : 0;
+
     characterModelGlob.value.changeModel(x, y, z);
   }
 };
 
 const stopDrag = (event) => {
-  console.log(456, event.clientX);
   isDragging = false;
 };
 
-const centerSphereCoord = () => {
+const changeModel = () => {
   characterModelGlob.value.changePartMeshInSphere(
     sphere,
     characterModelGlob.value.mCharacter
@@ -138,19 +138,35 @@ onMounted(async () => {
   const characterModel = new CharacterModel(scene);
   characterModelGlob.value = characterModel;
 
+  // let camera = new ArcRotateCamera(
+  //   "Camera",
+  //   (3 * Math.PI) / 2,
+  //   Math.PI / 4,
+  //   14,
+  //   Vector3.Zero(),
+  //   scene
+  // );
+
+  // camera.attachControl(canvas, true);
+
+  // camera.lowerRadiusLimit = 5;
+  // camera.upperRadiusLimit = 9;
+
   var camera = new ArcRotateCamera(
     "Camera",
-    (3 * Math.PI) / 2,
+    Math.PI / 2,
     Math.PI / 4,
-    14,
+    50,
     Vector3.Zero(),
     scene
   );
 
   camera.attachControl(canvas, true);
 
-  camera.lowerRadiusLimit = 3;
-  camera.upperRadiusLimit = 5;
+  camera.lowerRadiusLimit = 2;
+  camera.upperRadiusLimit = 10;
+
+  camera.useBouncingBehavior = true;
 
   const light = new DirectionalLight("light", new Vector3(0, 0, 1), scene);
   const light2 = new DirectionalLight("light", new Vector3(0, 0, -1), scene);

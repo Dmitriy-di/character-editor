@@ -20,28 +20,29 @@ export default class CharacterModel {
   }
   // подгрузить и настроить модели персонажа
   async build() {
-    this.mNormal = await this.loadModel('CharNormal.glb') // обычное телосложение
-    this.mNormal.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    // this.mNormal.position = new Vector3(-4, 0, 0)
+    this.mNormal = await this.loadModel('Male_normal.glb') // обычное телосложение
+    // this.mNormal.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
+    this.mNormal.position = new Vector3(-4, 0, 0)
     this.mNormal.scaling = new Vector3(0, 0, 0)
 
-    this.mAthletic = await this.loadModel('CharAthletic.glb') // накачанный
-    this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
+    this.mAthletic = await this.loadModel('Male_Atlet.glb') // накачанный
+    // this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mAthletic.position = new Vector3(-2, 0, 0)
     this.mAthletic.scaling = new Vector3(0, 0, 0)
 
-    this.mCharacter = await this.loadModel('CharNormal.glb') // обычное телосложение
+    this.mCharacter = await this.loadModel('Male_normal.glb') // обычное телосложение
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    // this.mCharacter.position = new Vector3(0, 0, 0)
+    this.mCharacter.position = new Vector3(0, 0, 0)
 
-    this.mSkinny = await this.loadModel('CharSkinny.glb') // худой
-    this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    // this.mSkinny.position = new Vector3(2, 0, 0)
+    //!Временно вместо тонкого взял нормального, т.к. у тонкого не такое же количество вершин, что у других
+    this.mSkinny = await this.loadModel('Male_normal.glb') // худой
+    // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
+    this.mSkinny.position = new Vector3(2, 0, 0)
     this.mSkinny.scaling = new Vector3(0, 0, 0)
 
-    this.mFat = await this.loadModel('CharFat.glb') // жирный
-    this.mFat.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    // this.mFat.position = new Vector3(4, 0, 0)
+    this.mFat = await this.loadModel('Male_fat.glb') // жирный
+    // this.mFat.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
+    this.mFat.position = new Vector3(4, 0, 0)
     this.mFat.scaling = new Vector3(0, 0, -0)
 
     this.mIsUpdatableVertecies = false
@@ -51,13 +52,13 @@ export default class CharacterModel {
   async loadModel(inFilename) {
     const res = await SceneLoader.ImportMeshAsync(
       '',
-      'assets/',
+      'assets/models2/',
       inFilename,
       this.mScene,
     )
 
     //Остановка анимации
-    res.animationGroups[0].stop()
+    // res.animationGroups[0].stop()
 
     //Запуск анимации
     //  res.animationGroups[0].start()
@@ -179,16 +180,10 @@ export default class CharacterModel {
     }
   }
 
+  //Изменение вершин внутри сферы
   computeCenterSphereCoord(sphere) {
     return sphere.position
   }
-
-  // computeCenterSphereCoord(sphere) {
-  //   const positions = sphere.getVerticesData(VertexBuffer.PositionKind)
-  //   const vertex = new Vector3(positions[0], positions[1], positions[2])
-  //   const distance = Vector3.Distance(vertex, sphere.position)
-  //   return distance
-  // }
 
   computeSphereRadiusInLocalCoordSystem(sphere, matrix) {
     const positions = sphere.getVerticesData(VertexBuffer.PositionKind)
@@ -224,7 +219,6 @@ export default class CharacterModel {
     let modelPoint = null
     const squareLocalRadiusSphere =
       this.computeSphereRadiusInLocalCoordSystem(sphere, matrix) ** 2
-    console.log('localRadiusSphere', squareLocalRadiusSphere)
 
     // Преобразование координат центра сферы в координаты относительно координат model
     const localCenterSphere = Vector3.TransformCoordinates(
@@ -232,15 +226,15 @@ export default class CharacterModel {
       invertedMatrix,
     )
 
-    console.log('localCenterSphere', localCenterSphere)
-
     let positionsModel = model.getVerticesData(VertexBuffer.PositionKind)
+
     for (let j = 0, length = positionsModel.length; j < length; j += 3) {
       modelPoint = {
         x: positionsModel[j],
         y: positionsModel[j + 1],
         z: positionsModel[j + 2],
       }
+
       squareDistanceToCenterSphere = this.squareDistTwoVertex3D(
         localCenterSphere,
         modelPoint,
@@ -258,7 +252,6 @@ export default class CharacterModel {
       sphere,
       inMesh,
     )
-    console.log('Индексы внутри сферы', indexesModelInSphere)
 
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
 
