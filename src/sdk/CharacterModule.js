@@ -13,6 +13,7 @@ export default class CharacterModel {
   mAthletic = null // накачанный
   mNormal = null // обычное телосложение
   mIsUpdatableVertecies = null // являются ли массивы вершин обновляемыми
+  highlightedModelPointIndices = [] // массив вершин модели, с которыми необходимо взаимодействовать
   // конструктор
   constructor(inScene) {
     this.mScene = inScene
@@ -20,27 +21,27 @@ export default class CharacterModel {
   }
   // подгрузить и настроить модели персонажа
   async build() {
-    this.mNormal = await this.loadModel('Male_normal.glb') // обычное телосложение
+    this.mNormal = await this.loadModel('Male_normal_noUV.glb') // обычное телосложение
     // this.mNormal.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mNormal.position = new Vector3(-4, 0, 0)
     this.mNormal.scaling = new Vector3(0, 0, 0)
 
-    this.mAthletic = await this.loadModel('Male_Atlet.glb') // накачанный
+    this.mAthletic = await this.loadModel('Male_Atlet_noUV.glb') // накачанный
     // this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mAthletic.position = new Vector3(-2, 0, 0)
     this.mAthletic.scaling = new Vector3(0, 0, 0)
 
-    this.mCharacter = await this.loadModel('Male_normal.glb') // обычное телосложение
+    this.mCharacter = await this.loadModel('Male_normal_noUV.glb') // обычное телосложение
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mCharacter.position = new Vector3(0, 0, 0)
 
-    //!Временно вместо тонкого взял нормального, т.к. у тонкого не такое же количество вершин, что у других
-    this.mSkinny = await this.loadModel('Male_normal.glb') // худой
+    //!Временно вместо тонкого взял качка, т.к. у тонкого не такое же количество вершин, что у других
+    this.mSkinny = await this.loadModel('Male_Atlet_noUV.glb') // худой
     // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mSkinny.position = new Vector3(2, 0, 0)
     this.mSkinny.scaling = new Vector3(0, 0, 0)
 
-    this.mFat = await this.loadModel('Male_fat.glb') // жирный
+    this.mFat = await this.loadModel('Male_fat_noUV.glb') // жирный
     // this.mFat.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mFat.position = new Vector3(4, 0, 0)
     this.mFat.scaling = new Vector3(0, 0, -0)
@@ -52,7 +53,7 @@ export default class CharacterModel {
   async loadModel(inFilename) {
     const res = await SceneLoader.ImportMeshAsync(
       '',
-      'assets/models2/',
+      'assets/models3/',
       inFilename,
       this.mScene,
     )
@@ -132,10 +133,11 @@ export default class CharacterModel {
 
     if (positions && positionsN && positionsS && positionsF && positionsA) {
       if (
-        positionsN.length === len &&
-        positionsS.length === len &&
-        positionsF.length === len &&
-        positionsA.length === len
+        // positionsN.length === len &&
+        // positionsS.length === len &&
+        // positionsF.length === len &&
+        // positionsA.length === len
+        true
       ) {
         for (let i = 0; i < positions.length; i += 3) {
           const i2 = i + 1
@@ -185,6 +187,7 @@ export default class CharacterModel {
     return sphere.position
   }
 
+  //вычислить радиус центра сферы в локальных координатах
   computeSphereRadiusInLocalCoordSystem(sphere, matrix) {
     const positions = sphere.getVerticesData(VertexBuffer.PositionKind)
 
@@ -205,18 +208,22 @@ export default class CharacterModel {
     return localRadiusSphere
   }
 
+  //вычислить квадрат растояния между вершинами
+  //Есть встроенная функция
   squareDistTwoVertex3D(a, b) {
     return (a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2
   }
 
+  //получить индексы вершин модели внутри сферы
   getIndexesVertexesModelInSphere(sphere, model) {
+    console.log(model.name)
     let indexesModelInSphere = []
+    let squareDistanceToCenterSphere = null
+    let modelPoint = null
     //!Без clone при срабатывании matrix.invert() модель исчезает
     const matrix = model.computeWorldMatrix(true).clone()
     const invertedMatrix = matrix.invert()
-    let squareDistanceToCenterSphere = null
     const centerSphere = this.computeCenterSphereCoord(sphere)
-    let modelPoint = null
     const squareLocalRadiusSphere =
       this.computeSphereRadiusInLocalCoordSystem(sphere, matrix) ** 2
 
@@ -247,19 +254,31 @@ export default class CharacterModel {
     return indexesModelInSphere
   }
 
-  changePartModelInSphere(sphere, inMesh = null) {
+  changePartModelInSphere(sphere, inMesh = null, parentMesh) {
     const indexesModelInSphere = this.getIndexesVertexesModelInSphere(
       sphere,
       inMesh,
     )
 
+    const childMesh = {
+      name: inMesh.name,
+      indexesModelInSphere: indexesModelInSphere,
+      children: [],
+    }
+
+    if (parentMesh.children == undefined) {
+      parentMesh.push(childMesh)
+    } else {
+      parentMesh.children.push(childMesh)
+    }
+
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
 
-    for (let j = 0, len = indexesModelInSphere.length; j < len; j++) {
-      positions[indexesModelInSphere[j]] *= 1.01
-      positions[indexesModelInSphere[j] + 1] *= 1.01
-      positions[indexesModelInSphere[j] + 2] *= 1.01
-    }
+    // for (let j = 0, len = indexesModelInSphere.length; j < len; j++) {
+    //   positions[indexesModelInSphere[j]] *= 1.01
+    //   positions[indexesModelInSphere[j] + 1] *= 1.01
+    //   positions[indexesModelInSphere[j] + 2] *= 1.01
+    // }
 
     if (this.mIsUpdatableVertecies)
       inMesh.updateVerticesData(
@@ -275,7 +294,7 @@ export default class CharacterModel {
     const meshes = inMesh.getChildMeshes()
 
     for (let j = 0, len = meshes.length; j < len; j++) {
-      this.changePartModelInSphere(meshes[j])
+      this.changePartModelInSphere(sphere, meshes[j], childMesh)
     }
   }
 
@@ -283,7 +302,12 @@ export default class CharacterModel {
     const meshes = model.getChildMeshes()
 
     for (let i = 0; i < meshes.length; i++) {
-      this.changePartModelInSphere(sphere, meshes[i])
+      this.changePartModelInSphere(
+        sphere,
+        meshes[i],
+        this.highlightedModelPointIndices,
+      )
     }
+    console.log('Выбранные вершина модели', this.highlightedModelPointIndices)
   }
 }

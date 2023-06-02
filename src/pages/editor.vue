@@ -1,4 +1,4 @@
-<template>
+<template @mouseup="stopDrag">
   <div>
     <canvas
       class="canvas"
@@ -12,35 +12,30 @@
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
         <polygon
-          @mousemove.self="handleMouseMove"
+          class="polygon_triangle"
           :points="trianglePoints"
-          fill="blue"
+          fill="transparent"
+          ref="trianglePolygon"
+          @mousemove="handleMouseMove"
         ></polygon>
 
-        <!-- <svg
-          @mousedown="startDrag"
-          x="80"
-          y="80"
-          @mousedown.self="startDrag"
-          width="40"
-          height="40"
-          viewBox="0 0 80 69"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M80 34.4817C80 53.2356 62.0914 68.4386 40 68.4386C17.9086 68.4386 0 53.2356 0 34.4817C0 15.7279 17.9086 0.524902 40 0.524902C62.0914 0.524902 80 15.7279 80 34.4817Z"
-            fill="#868686"
-          />
-        </svg> -->
-
-        <circle
+        <!-- <circle
           :cx="sliderX"
           :cy="sliderY"
           r="10"
           fill="red"
           @mousedown.self="startDrag"
-        ></circle>
+        ></circle> -->
+
+        <image
+          class="circleInTriangle"
+          :x="sliderX - imageSize / 2"
+          :y="sliderY - imageSize / 2"
+          :width="imageSize"
+          :height="imageSize"
+          xlink:href="../assets/circleInTriangle.svg"
+          @mousedown.self="startDrag"
+        ></image>
       </svg>
 
       <!-- <img class="triangle_img" src="../assets/triangleBodyGange.svg" alt="" /> -->
@@ -82,15 +77,17 @@ const { pages } = defineProps({
 });
 
 const renderCanvas = ref(null);
+const trianglePolygon = ref(null);
 const characterModelGlob = ref();
 const gizmoManager = ref(null);
 let sphere = null;
-const trianglePoints = ref("100,0 0,200 200,200");
+const trianglePoints = ref("100,0 0,170 200,170");
 const sliderX = ref(100);
 const sliderY = ref(100);
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
+const imageSize = 30;
 
 const startDrag = (event) => {
   if (event.button === 0) {
@@ -129,6 +126,8 @@ const changeModel = () => {
 };
 
 onMounted(async () => {
+  document.body.addEventListener("mouseup", stopDrag);
+
   const canvas = renderCanvas.value;
 
   const engine = new Engine(canvas);
@@ -138,33 +137,19 @@ onMounted(async () => {
   const characterModel = new CharacterModel(scene);
   characterModelGlob.value = characterModel;
 
-  // let camera = new ArcRotateCamera(
-  //   "Camera",
-  //   (3 * Math.PI) / 2,
-  //   Math.PI / 4,
-  //   14,
-  //   Vector3.Zero(),
-  //   scene
-  // );
-
-  // camera.attachControl(canvas, true);
-
-  // camera.lowerRadiusLimit = 5;
-  // camera.upperRadiusLimit = 9;
-
   var camera = new ArcRotateCamera(
     "Camera",
     Math.PI / 2,
     Math.PI / 4,
     50,
-    Vector3.Zero(),
+    new Vector3(0, 1, 0),
     scene
   );
 
   camera.attachControl(canvas, true);
 
-  camera.lowerRadiusLimit = 2;
-  camera.upperRadiusLimit = 10;
+  camera.lowerRadiusLimit = 1;
+  camera.upperRadiusLimit = 7;
 
   camera.useBouncingBehavior = true;
 
@@ -187,11 +172,10 @@ onMounted(async () => {
   // }, PointerEventTypes.POINTERUP);
 
   //Добавление сферы на сцену
-  sphere = Mesh.CreateSphere(`sphere`, 16, 1, scene);
+  sphere = Mesh.CreateSphere(`sphere`, 16, 0.4, scene);
 
   sphere.position.y = 1;
 
-  // sphere.material = new StandardMaterial("sphere material", scene);
   let material = new StandardMaterial("transparentMaterial", scene);
   material.alpha = 0.3; // Установка прозрачности (от 0 до 1)
   sphere.material = material;
@@ -251,13 +235,26 @@ body {
 .result {
   margin-top: 20px;
 }
+
+.circleInTriangle {
+  position: relative;
+  z-index: 1;
+}
+
+.polygon_triangle {
+  position: relative;
+  z-index: 2;
+}
 //TRIANGLE/
 
 .triangle_svg {
   position: relative;
   width: 200px;
   height: 200px;
-  background-color: lightgray;
+  background-color: transparent;
+  background-image: url("../assets/triangleBodyGange.svg");
+  background-size: 100% 100%;
+  background-position: center;
 }
 
 // .triangle_img {
