@@ -18,15 +18,6 @@
           ref="trianglePolygon"
           @mousemove="handleMouseMove"
         ></polygon>
-
-        <!-- <circle
-          :cx="sliderX"
-          :cy="sliderY"
-          r="10"
-          fill="red"
-          @mousedown.self="startDrag"
-        ></circle> -->
-
         <image
           class="circleInTriangle"
           :x="sliderX - imageSize / 2"
@@ -119,7 +110,7 @@ const stopDrag = (event) => {
 };
 
 const changeModel = () => {
-  characterModelGlob.value.changePartMeshInSphere(
+  characterModelGlob.value.changePartModelInSphere(
     sphere,
     characterModelGlob.value.mCharacter
   );

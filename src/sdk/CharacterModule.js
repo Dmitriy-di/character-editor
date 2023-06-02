@@ -13,7 +13,6 @@ export default class CharacterModel {
   mAthletic = null // накачанный
   mNormal = null // обычное телосложение
   mIsUpdatableVertecies = null // являются ли массивы вершин обновляемыми
-  highlightedModelPointIndices = [] // массив вершин модели, с которыми необходимо взаимодействовать
   // конструктор
   constructor(inScene) {
     this.mScene = inScene
@@ -182,7 +181,8 @@ export default class CharacterModel {
     }
   }
 
-  //Изменение вершин внутри сферы
+  // ====поиск вершин модели по условию=====
+  // изменение вершин внутри сферы
   computeCenterSphereCoord(sphere) {
     return sphere.position
   }
@@ -254,7 +254,8 @@ export default class CharacterModel {
     return indexesModelInSphere
   }
 
-  changePartModelInSphere(sphere, inMesh = null, parentMesh) {
+  // функция, ищущая вершины inMesh по встроенному(пока) условию
+  searchingVertexesMesh(sphere, inMesh = null, parentMesh) {
     const indexesModelInSphere = this.getIndexesVertexesModelInSphere(
       sphere,
       inMesh,
@@ -262,7 +263,7 @@ export default class CharacterModel {
 
     const childMesh = {
       name: inMesh.name,
-      indexesModelInSphere: indexesModelInSphere,
+      indexes: indexesModelInSphere,
       children: [],
     }
 
@@ -274,11 +275,47 @@ export default class CharacterModel {
 
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
 
-    // for (let j = 0, len = indexesModelInSphere.length; j < len; j++) {
-    //   positions[indexesModelInSphere[j]] *= 1.01
-    //   positions[indexesModelInSphere[j] + 1] *= 1.01
-    //   positions[indexesModelInSphere[j] + 2] *= 1.01
-    // }
+    const meshes = inMesh.getChildMeshes()
+
+    for (let j = 0, len = meshes.length; j < len; j++) {
+      this.searchingVertexesMesh(sphere, meshes[j], childMesh)
+    }
+  }
+
+  // функция, начинающая поиск вершин модели по условию
+  searchingVertexesModel(sphere, model) {
+    let vertexArr = []
+
+    const meshes = model.getChildMeshes()
+
+    for (let i = 0; i < meshes.length; i++) {
+      this.searchingVertexesMesh(sphere, meshes[i], vertexArr)
+    }
+
+    console.log('Выбранные вершина модели', vertexArr)
+    return vertexArr
+  }
+
+  // изменение части модели по нужным вершинам
+  changePartModelInSphere(sphere, model) {
+    const vertexArr = this.searchingVertexesModel(sphere, model)
+    console.log('vertexArr', vertexArr)
+    const meshes = model.getChildMeshes()
+
+    for (let i = 0; i < meshes.length; i++) {
+      this.changePartMeshInSphere(meshes[i], vertexArr[i].indexes)
+    }
+  }
+
+  // изменение части меша модели по нужным вершинам
+  changePartMeshInSphere(inMesh, meshIndexesVertexForChanging) {
+    let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+
+    for (let j = 0, len = meshIndexesVertexForChanging.length; j < len; j++) {
+      positions[meshIndexesVertexForChanging[j]] *= 1.01
+      positions[meshIndexesVertexForChanging[j] + 1] *= 1.01
+      positions[meshIndexesVertexForChanging[j] + 2] *= 1.01
+    }
 
     if (this.mIsUpdatableVertecies)
       inMesh.updateVerticesData(
@@ -288,26 +325,72 @@ export default class CharacterModel {
         true,
       )
     else inMesh.setVerticesData(VertexBuffer.PositionKind, positions, true)
-    //   I think the problem is that updateVerticesData returns early without doing anything if the buffer doesn’t exist already or if it isn’t updatable, but if you use setVerticesData it will create a new buffer for you and set it regardless. Try doing it like below.
-    //  inSubMesh.updateVerticesData(VertexBuffer.PositionKind, positions);
 
     const meshes = inMesh.getChildMeshes()
 
     for (let j = 0, len = meshes.length; j < len; j++) {
-      this.changePartModelInSphere(sphere, meshes[j], childMesh)
+      this.changePartMeshInSphere(
+        meshes[j],
+        meshIndexesVertexForChanging.children[j].indexes,
+      )
     }
   }
 
-  changePartMeshInSphere(sphere, model) {
+  // вращение часть модели в сфере
+  rotatePartModelInSphere(sphere, model) {
+    const vertexArr = this.searchingVertexesModel(sphere, model)
+    console.log('vertexArr', vertexArr)
+
     const meshes = model.getChildMeshes()
 
     for (let i = 0; i < meshes.length; i++) {
-      this.changePartModelInSphere(
-        sphere,
-        meshes[i],
-        this.highlightedModelPointIndices,
+      this.rotatePartModelInSphere(meshes[i], vertexArr[i].indexes)
+    }
+  }
+
+  // вращение части меша модели по нужным вершинам
+  rotatePartModelInSphere(inMesh, meshIndexesVertexForChanging) {
+    let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+
+    let axis = new Vector3(0, 1, 0) // Пример оси вращения (ось Y)
+    let angle = Math.PI / 4 // Пример угла вращения (45 градусов)
+
+    for (let j = 0, len = meshIndexesVertexForChanging.length; j < len; j++) {
+      let localPosition = positions[index]
+      let vertex = Vector3.FromArray(localPosition)
+      vertex.rotateByQuaternionToRef(
+        Quaternion.RotationAxis(axis, angle),
+        vertex,
+      )
+      inMesh.setVerticesData(VertexBuffer.PositionKind, vertex.asArray(), false)
+
+      // positions[meshIndexesVertexForChanging[j]] *= 1.01
+      // positions[meshIndexesVertexForChanging[j] + 1] *= 1.01
+      // positions[meshIndexesVertexForChanging[j] + 2] *= 1.01
+    }
+    inMesh.updateVerticesData(
+      VertexBuffer.PositionKind,
+      mesh.getVerticesData(VertexBuffer.PositionKind),
+      false,
+      false,
+    )
+
+    if (this.mIsUpdatableVertecies)
+      inMesh.updateVerticesData(
+        VertexBuffer.PositionKind,
+        positions,
+        true,
+        true,
+      )
+    else inMesh.setVerticesData(VertexBuffer.PositionKind, positions, true)
+
+    const meshes = inMesh.getChildMeshes()
+
+    for (let j = 0, len = meshes.length; j < len; j++) {
+      this.rotatePartModelInSphere(
+        meshes[j],
+        meshIndexesVertexForChanging.children[j].indexes,
       )
     }
-    console.log('Выбранные вершина модели', this.highlightedModelPointIndices)
   }
 }
