@@ -542,7 +542,6 @@ export default class CharacterModel {
       // positions[j + 2] = inMeshVertex.z
     }
 
-    // Создание массива индексов вершин
     // for (let i = 0, len = vertices.length / 3; i < len; i++) {
     //   indices.push(i)
     // }
