@@ -90,6 +90,9 @@ import {
   ShaderMaterial,
   ShaderLanguage,
   UniformBuffer,
+  TextureSampler,
+  Constants,
+  Effect,
 } from "@babylonjs/core";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -228,7 +231,7 @@ onMounted(async () => {
 
   const ground = Mesh.CreateGround("ground", 1000, 1000, 1, scene, false);
   const groundMaterial = new StandardMaterial("ground", scene);
-  groundMaterial.specularColor = Color3.Black();
+  groundMaterial.specularColor = Color3.Yellow();
   ground.material = groundMaterial;
 
   await characterModel.build();

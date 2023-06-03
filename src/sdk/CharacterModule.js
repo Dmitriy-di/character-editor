@@ -15,6 +15,7 @@ import {
   ShaderLanguage,
   Constants,
   TextureSampler,
+  Effect,
 } from '@babylonjs/core'
 import { Texture } from '@babylonjs/core/Materials/Textures/texture'
 
@@ -60,126 +61,148 @@ export default class CharacterModel {
     this.mFat.position = new Vector3(4, 0, 0)
     this.mFat.scaling = new Vector3(0, 0, -0)
 
+    // let uvs = this.mCharacter
+    //   .getChildMeshes()[0]
+    //   .getVerticesData(VertexBuffer.UVKind)
+    // console.log('uvs', uvs)
+    // for (let i = 0, len = uvs.length; i < len; i++) {
+    //   if (uvs[i] > 1 || uvs[i] <= 0) {
+    //     console.log(1, i)
+    //     console.log(2, uvs[i])
+    //   }
+    // }
+
     this.mIsUpdatableVertecies = false
   }
 
   // подгрузить модель персонажа
   async loadModel(inFilename) {
-    ShaderStore.ShadersStoreWGSL['customcubeVertexShader'] = `   
-        #include<sceneUboDeclaration>
-        #include<meshUboDeclaration>
+    Effect.ShadersStore['customVertexShader'] = `
+    precision highp float;
+    #include<instancesDeclaration>
+    attribute vec3 position;
+    attribute vec4 color;
+    attribute vec2 uv; // Добавлен атрибут uv
+    uniform mat4 viewProjection;
+    varying vec3 vert_color;
+    varying vec2 frag_uv; // Добавлен varying для передачи uv во фрагментный шейдер
 
-        attribute position : vec3<f32>;
-        attribute normal : vec3<f32>;
-        attribute uv: vec2<f32>;
- 
-        varying vNormal : vec3<f32>;
-        varying vUV : vec2<f32>;
+    void main(void) {
+        #include<instancesVertex>
+        vert_color = color.rgb;
+        frag_uv = uv; // Передаем значение uv во фрагментный шейдер
+        gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
+    }`
 
-        struct MyUBO {
-            scale: f32,
-        };
-
-        var<uniform> myUBO: MyUBO;
-
-        @vertex
-        fn main(input : VertexInputs) -> FragmentInputs {
-            vertexOutputs.position = scene.viewProjection * mesh.world * vec4<f32>(vertexInputs.position * vec3<f32>(myUBO.scale), 1.0);
-            vertexOutputs.vNormal = vertexInputs.normal;
-            vertexOutputs.vUV = vertexInputs.uv;
-        }    
+    Effect.ShadersStore['customFragmentShader'] = `
+    uniform sampler2D textureSampler;
+    precision mediump float;
+    varying vec3 vert_color;
+    varying vec2 frag_uv;
+    
+    void main(void) {
+        vec4 texColor = texture2D(textureSampler, frag_uv);
+        gl_FragColor = vec4(vert_color, 1.0) * texColor; // Умножаем цвет вершины на цвет из текстуры
+    }
     `
 
-    ShaderStore.ShadersStoreWGSL['customcubeFragmentShader'] = `
-        uniform vColor : array<vec4<f32>, 2>;
-
-        varying vNormal : vec3<f32>;
-        varying vUV : vec2<f32>;
-
-        var diffuse : texture_2d<f32>;
-        var mySampler : sampler;
-
-        @fragment
-        fn main(input : FragmentInputs) -> FragmentOutputs {
-            fragmentOutputs.color.r = fragmentInputs.vUV.x;
-            fragmentOutputs.color.g = fragmentInputs.vUV.y;
-            fragmentOutputs.color.b = 0.0f;
-            fragmentOutputs.color.a = 1.0f;
-           // fragmentOutputs.color = textureSample(diffuse, mySampler, fragmentInputs.vUV) * uniforms.vColor[1];
-        }
-    `
-
-    const myUBO = new UniformBuffer(this.mEngine)
-
-    myUBO.addUniform('scale', 1)
-    myUBO.updateFloat('scale', 1.5)
-    myUBO.update()
-
-    const mainTexture = new Texture('assets/textures/crate.png', this.mScene)
-
-    var shaderMaterial = new ShaderMaterial(
-      'shader',
+    let myMat = new ShaderMaterial(
+      'myMat',
       this.mScene,
       {
-        vertex: 'customcube',
-        fragment: 'customcube',
+        vertex: 'custom',
+        fragment: 'custom',
       },
       {
-        attributes: ['position', 'normal', 'uv'],
-        uniformBuffers: ['Scene', 'Mesh'],
-        shaderLanguage: ShaderLanguage.WGSL,
+        attributes: ['position'],
+        uniforms: ['world', 'viewProjection'],
       },
     )
 
-    shaderMaterial.setFloats('vColor', [1, 0, 0, 1, 0, 1, 0, 1])
-    shaderMaterial.setUniformBuffer('myUBO', myUBO)
-    shaderMaterial.setTexture('diffuse', mainTexture)
+    const mainTexture = new Texture('assets/textures/lavatile.jpg', this.mScene)
+    myMat.setTexture('textureSampler', mainTexture)
 
-    const sampler = new TextureSampler()
+    const res = await SceneLoader.ImportMeshAsync(
+      '',
+      'assets/models2/',
+      inFilename,
+      this.mScene,
+    )
 
-    sampler.setParameters() // use the default values
-    sampler.samplingMode = Constants.TEXTURE_NEAREST_SAMPLINGMODE
+    for (let mesh of res.meshes) mesh.material = myMat
+    let resMesh = res.meshes[0]
+    return resMesh
+    // const myUBO = new UniformBuffer(this.mEngine)
 
-    shaderMaterial.setTextureSampler('mySampler', sampler)
+    // myUBO.addUniform('scale', 1)
+    // myUBO.updateFloat('scale', 1.5)
+    // myUBO.update()
 
-    // const res = await SceneLoader.ImportMeshAsync(
-    //   '',
-    //   'assets/models2/',
-    //   inFilename,
+    // const mainTexture = new Texture('assets/textures/crate.png', this.mScene)
+
+    // var shaderMaterial = new ShaderMaterial(
+    //   'shader',
     //   this.mScene,
+    //   {
+    //     vertex: 'customcube',
+    //     fragment: 'customcube',
+    //   },
+    //   {
+    //     attributes: ['position', 'normal', 'uv'],
+    //     uniformBuffers: ['Scene', 'Mesh'],
+    //     shaderLanguage: ShaderLanguage.WGSL,
+    //   },
     // )
 
-    //Остановка анимации
-    // res.animationGroups[0].stop()
+    // shaderMaterial.setFloats('vColor', [1, 0, 0, 1, 0, 1, 0, 1])
+    // shaderMaterial.setUniformBuffer('myUBO', myUBO)
+    // shaderMaterial.setTexture('diffuse', mainTexture)
 
-    //Запуск анимации
-    //  res.animationGroups[0].start()
+    // const sampler = new TextureSampler()
 
-    // const resMesh = res.meshes[0]
+    // sampler.setParameters() // use the default values
+    // sampler.samplingMode = Constants.TEXTURE_NEAREST_SAMPLINGMODE
 
-    return new Promise((resolve) => {
-      mainTexture.onLoadObservable.addOnce(async () => {
-        const res = await SceneLoader.ImportMeshAsync(
-          '',
-          'assets/models2/',
-          inFilename,
-          this.mScene,
-        )
+    // shaderMaterial.setTextureSampler('mySampler', sampler)
 
-        const resMesh = res.meshes[0]
-        res.meshes[0].material = shaderMaterial
-        res.meshes[1].material = shaderMaterial
-        res.meshes[2].material = shaderMaterial
-        res.meshes[3].material = shaderMaterial
-        res.meshes[4].material = shaderMaterial
+    // // const res = await SceneLoader.ImportMeshAsync(
+    // //   '',
+    // //   'assets/models2/',
+    // //   inFilename,
+    // //   this.mScene,
+    // // )
 
-        // resMesh.material = shaderMaterial
-        // res.material = shaderMaterial
-        // for (let mesh of ac.resMesh) mesh.material = shaderMaterial
+    // //Остановка анимации
+    // // res.animationGroups[0].stop()
 
-        resolve(resMesh)
-      })
-    })
+    // //Запуск анимации
+    // //  res.animationGroups[0].start()
+
+    // // const resMesh = res.meshes[0]
+
+    // return new Promise((resolve) => {
+    //   mainTexture.onLoadObservable.addOnce(async () => {
+    //     const res = await SceneLoader.ImportMeshAsync(
+    //       '',
+    //       'assets/models2/',
+    //       inFilename,
+    //       this.mScene,
+    //     )
+
+    //     const resMesh = res.meshes[0]
+    //     res.meshes[0].material = shaderMaterial
+    //     res.meshes[1].material = shaderMaterial
+    //     res.meshes[2].material = shaderMaterial
+    //     res.meshes[3].material = shaderMaterial
+    //     res.meshes[4].material = shaderMaterial
+
+    //     // resMesh.material = shaderMaterial
+    //     // res.material = shaderMaterial
+    //     // for (let mesh of ac.resMesh) mesh.material = shaderMaterial
+
+    //     resolve(resMesh)
+    //   })
+    // })
   }
 
   // изменить модель в соответствии с весами
@@ -220,6 +243,7 @@ export default class CharacterModel {
     inAthleticVal,
   ) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+    let UVKind = inMesh.getVerticesData(VertexBuffer.UVKind)
     const len = positions.length
     //! Убрать получение массивов координат всех моделей, на получение массива координат только нужной модели
     const positionsN = inMeshN.getVerticesData(VertexBuffer.PositionKind)
@@ -271,6 +295,7 @@ export default class CharacterModel {
     const meshesF = inMeshF.getChildMeshes() // жирный
     const meshesA = inMeshA.getChildMeshes() // накачанный
     const meshesN = inMeshN.getChildMeshes() // обычное телосложение
+
     for (let j = 0; j < meshes.length; j++) {
       this.changeMesh(
         meshes[j],
