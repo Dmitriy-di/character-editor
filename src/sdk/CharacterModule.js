@@ -2,6 +2,7 @@ import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh'
 import { Scene } from '@babylonjs/core/scene'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import { SkeletonViewer } from '@babylonjs/core/Debug/skeletonViewer'
+import { MeshBuilder } from '@babylonjs/core/Meshes/meshBuilder'
 import { Quaternion, Vector3, Matrix } from '@babylonjs/core/Maths/math.vector'
 import {
   Space,
@@ -50,7 +51,7 @@ export default class CharacterModel {
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mCharacter.position = new Vector3(0, 0, 0)
 
-    //!Временно вместо тонкого взял качка, т.к. у тонкого не такое же количество вершин, что у других
+    // //!Временно вместо тонкого взял качка, т.к. у тонкого не такое же количество вершин, что у других
     this.mSkinny = await this.loadModel('Male_Atlet.glb') // худой
     // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mSkinny.position = new Vector3(2, 0, 0)
@@ -77,50 +78,57 @@ export default class CharacterModel {
 
   // подгрузить модель персонажа
   async loadModel(inFilename) {
-    Effect.ShadersStore['customVertexShader'] = `
-    precision highp float;
-    #include<instancesDeclaration>
-    attribute vec3 position;
-    attribute vec4 color;
-    attribute vec2 uv; // Добавлен атрибут uv
-    uniform mat4 viewProjection;
-    varying vec3 vert_color;
-    varying vec2 frag_uv; // Добавлен varying для передачи uv во фрагментный шейдер
+    Effect.ShadersStore['customVertexShader'] =
+      '\r\n' +
+      'precision highp float;\r\n' +
+      '// Attributes\r\n' +
+      'attribute vec3 position;\r\n' +
+      'attribute vec2 uv;\r\n' +
+      '// Uniforms\r\n' +
+      'uniform mat4 worldViewProjection;\r\n' +
+      '// Varying\r\n' +
+      'varying vec2 vUV;\r\n' +
+      'void main(void) {\r\n' +
+      '    gl_Position = worldViewProjection * vec4(position, 1.0);\r\n' +
+      '    vUV = uv;\r\n' +
+      '}\r\n'
 
-    void main(void) {
-        #include<instancesVertex>
-        vert_color = color.rgb;
-        frag_uv = uv; // Передаем значение uv во фрагментный шейдер
-        gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
-    }`
+    Effect.ShadersStore['customFragmentShader'] =
+      '\r\n' +
+      'precision highp float;\r\n' +
+      'varying vec2 vUV;\r\n' +
+      'uniform sampler2D textureSampler;\r\n' +
+      'void main(void) {\r\n' +
+      '    gl_FragColor = texture2D(textureSampler, vUV);\r\n' +
+      '}\r\n'
 
-    Effect.ShadersStore['customFragmentShader'] = `
-    uniform sampler2D textureSampler;
-    precision mediump float;
-    varying vec3 vert_color;
-    varying vec2 frag_uv;
-    
-    void main(void) {
-        vec4 texColor = texture2D(textureSampler, frag_uv);
-        gl_FragColor = vec4(vert_color, 1.0) * texColor; // Умножаем цвет вершины на цвет из текстуры
-    }
-    `
-
-    let myMat = new ShaderMaterial(
-      'myMat',
+    var shaderMaterial = new ShaderMaterial(
+      'shader',
       this.mScene,
       {
         vertex: 'custom',
         fragment: 'custom',
       },
       {
-        attributes: ['position'],
-        uniforms: ['world', 'viewProjection'],
+        attributes: ['position', 'normal', 'uv'],
+        uniforms: [
+          'world',
+          'worldView',
+          'worldViewProjection',
+          'view',
+          'projection',
+        ],
       },
     )
 
-    const mainTexture = new Texture('assets/textures/lavatile.jpg', this.mScene)
-    myMat.setTexture('textureSampler', mainTexture)
+    const mainTexture = new Texture('assets/textures/crate.png', this.mScene)
+
+    shaderMaterial.setTexture('textureSampler', mainTexture)
+
+    shaderMaterial.backFaceCulling = false
+
+    // var box = MeshBuilder.CreateBox('box', {}, this.mScene)
+    // box.material = shaderMaterial
 
     const res = await SceneLoader.ImportMeshAsync(
       '',
@@ -129,80 +137,68 @@ export default class CharacterModel {
       this.mScene,
     )
 
-    for (let mesh of res.meshes) mesh.material = myMat
+    for (let mesh of res.meshes) {
+      console.log('mesh', mesh)
+      mesh.material = shaderMaterial
+    }
     let resMesh = res.meshes[0]
     return resMesh
-    // const myUBO = new UniformBuffer(this.mEngine)
 
-    // myUBO.addUniform('scale', 1)
-    // myUBO.updateFloat('scale', 1.5)
-    // myUBO.update()
+    // Effect.ShadersStore['customVertexShader'] = `
+    // precision highp float;
+    // #include<instancesDeclaration>
+    // attribute vec3 position;
+    // attribute vec4 color;
+    // attribute vec2 uv; // Добавлен атрибут uv
+    // uniform mat4 viewProjection;
+    // varying vec3 vert_color;
+    // varying vec2 frag_uv; // Добавлен varying для передачи uv во фрагментный шейдер
 
-    // const mainTexture = new Texture('assets/textures/crate.png', this.mScene)
+    // void main(void) {
+    //     #include<instancesVertex>
+    //     vert_color = color.rgb;
+    //     frag_uv = uv; // Передаем значение uv во фрагментный шейдер
+    //     gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
+    // }`
 
-    // var shaderMaterial = new ShaderMaterial(
-    //   'shader',
+    // Effect.ShadersStore['customFragmentShader'] = `
+    // uniform sampler2D textureSampler;
+    // precision mediump float;
+    // varying vec3 vert_color;
+    // varying vec2 frag_uv;
+
+    // void main(void) {
+    //     vec4 texColor = texture2D(textureSampler, frag_uv);
+    //     gl_FragColor = vec4(vert_color, 1.0) * texColor; // Умножаем цвет вершины на цвет из текстуры
+    // }
+    // `
+
+    // let myMat = new ShaderMaterial(
+    //   'myMat',
     //   this.mScene,
     //   {
-    //     vertex: 'customcube',
-    //     fragment: 'customcube',
+    //     vertex: 'custom',
+    //     fragment: 'custom',
     //   },
     //   {
-    //     attributes: ['position', 'normal', 'uv'],
-    //     uniformBuffers: ['Scene', 'Mesh'],
-    //     shaderLanguage: ShaderLanguage.WGSL,
+    //     attributes: ['position'],
+    //     uniforms: ['world', 'viewProjection'],
     //   },
     // )
 
-    // shaderMaterial.setFloats('vColor', [1, 0, 0, 1, 0, 1, 0, 1])
-    // shaderMaterial.setUniformBuffer('myUBO', myUBO)
-    // shaderMaterial.setTexture('diffuse', mainTexture)
+    // const mainTexture = new Texture('assets/textures/lavatile.jpg', this.mScene)
+    // myMat.setTexture('textureSampler', mainTexture)
 
-    // const sampler = new TextureSampler()
+    // const res = await SceneLoader.ImportMeshAsync(
+    //   '',
+    //   'assets/models2/',
+    //   inFilename,
+    //   this.mScene,
+    // )
 
-    // sampler.setParameters() // use the default values
-    // sampler.samplingMode = Constants.TEXTURE_NEAREST_SAMPLINGMODE
-
-    // shaderMaterial.setTextureSampler('mySampler', sampler)
-
-    // // const res = await SceneLoader.ImportMeshAsync(
-    // //   '',
-    // //   'assets/models2/',
-    // //   inFilename,
-    // //   this.mScene,
-    // // )
-
-    // //Остановка анимации
-    // // res.animationGroups[0].stop()
-
-    // //Запуск анимации
-    // //  res.animationGroups[0].start()
-
-    // // const resMesh = res.meshes[0]
-
-    // return new Promise((resolve) => {
-    //   mainTexture.onLoadObservable.addOnce(async () => {
-    //     const res = await SceneLoader.ImportMeshAsync(
-    //       '',
-    //       'assets/models2/',
-    //       inFilename,
-    //       this.mScene,
-    //     )
-
-    //     const resMesh = res.meshes[0]
-    //     res.meshes[0].material = shaderMaterial
-    //     res.meshes[1].material = shaderMaterial
-    //     res.meshes[2].material = shaderMaterial
-    //     res.meshes[3].material = shaderMaterial
-    //     res.meshes[4].material = shaderMaterial
-
-    //     // resMesh.material = shaderMaterial
-    //     // res.material = shaderMaterial
-    //     // for (let mesh of ac.resMesh) mesh.material = shaderMaterial
-
-    //     resolve(resMesh)
-    //   })
-    // })
+    // for (let mesh of res.meshes) mesh.material = myMat
+    // let resMesh = res.meshes[0]
+    // return resMesh
   }
 
   // изменить модель в соответствии с весами
