@@ -2,7 +2,8 @@ import { AbstractMesh } from '@babylonjs/core/Meshes/abstractMesh'
 import { Scene } from '@babylonjs/core/scene'
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader'
 import { SkeletonViewer } from '@babylonjs/core/Debug/skeletonViewer'
-import { Space, Vector3, VertexBuffer } from '@babylonjs/core'
+import { Quaternion, Vector3, Matrix } from '@babylonjs/core/Maths/math.vector'
+import { Space, VertexBuffer, TransformNode, Mesh } from '@babylonjs/core'
 
 // редактируемая модель персонажа
 export default class CharacterModel {
@@ -20,27 +21,27 @@ export default class CharacterModel {
   }
   // подгрузить и настроить модели персонажа
   async build() {
-    this.mNormal = await this.loadModel('Male_normal_noUV.glb') // обычное телосложение
+    this.mNormal = await this.loadModel('MaleNormal.glb') // обычное телосложение
     // this.mNormal.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mNormal.position = new Vector3(-4, 0, 0)
     this.mNormal.scaling = new Vector3(0, 0, 0)
 
-    this.mAthletic = await this.loadModel('Male_Atlet_noUV.glb') // накачанный
+    this.mAthletic = await this.loadModel('MaleThin.glb') // накачанный
     // this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mAthletic.position = new Vector3(-2, 0, 0)
     this.mAthletic.scaling = new Vector3(0, 0, 0)
 
-    this.mCharacter = await this.loadModel('Male_normal_noUV.glb') // обычное телосложение
+    this.mCharacter = await this.loadModel('MaleNormal.glb') // обычное телосложение
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mCharacter.position = new Vector3(0, 0, 0)
 
     //!Временно вместо тонкого взял качка, т.к. у тонкого не такое же количество вершин, что у других
-    this.mSkinny = await this.loadModel('Male_Atlet_noUV.glb') // худой
+    this.mSkinny = await this.loadModel('MaleAtlet.glb') // худой
     // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mSkinny.position = new Vector3(2, 0, 0)
     this.mSkinny.scaling = new Vector3(0, 0, 0)
 
-    this.mFat = await this.loadModel('Male_fat_noUV.glb') // жирный
+    this.mFat = await this.loadModel('MaleFat.glb') // жирный
     // this.mFat.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mFat.position = new Vector3(4, 0, 0)
     this.mFat.scaling = new Vector3(0, 0, -0)
@@ -52,7 +53,7 @@ export default class CharacterModel {
   async loadModel(inFilename) {
     const res = await SceneLoader.ImportMeshAsync(
       '',
-      'assets/models3/',
+      'assets/modules14/',
       inFilename,
       this.mScene,
     )
@@ -215,9 +216,8 @@ export default class CharacterModel {
   }
 
   //получить индексы вершин модели внутри сферы
-  getIndexesVertexesModelInSphere(sphere, model) {
-    console.log(model.name)
-    let indexesModelInSphere = []
+  getIndicesVertexesModelInSphere(sphere, model) {
+    let indicesModelInSphere = []
     let squareDistanceToCenterSphere = null
     let modelPoint = null
     //!Без clone при срабатывании matrix.invert() модель исчезает
@@ -248,22 +248,22 @@ export default class CharacterModel {
       )
 
       if (squareDistanceToCenterSphere < squareLocalRadiusSphere) {
-        indexesModelInSphere.push(j)
+        indicesModelInSphere.push(j)
       }
     }
-    return indexesModelInSphere
+    return indicesModelInSphere
   }
 
   // функция, ищущая вершины inMesh по встроенному(пока) условию
   searchingVertexesMesh(sphere, inMesh = null, parentMesh) {
-    const indexesModelInSphere = this.getIndexesVertexesModelInSphere(
+    const indicesModelInSphere = this.getIndicesVertexesModelInSphere(
       sphere,
       inMesh,
     )
 
     const childMesh = {
       name: inMesh.name,
-      indexes: indexesModelInSphere,
+      indices: indicesModelInSphere,
       children: [],
     }
 
@@ -303,18 +303,18 @@ export default class CharacterModel {
     const meshes = model.getChildMeshes()
 
     for (let i = 0; i < meshes.length; i++) {
-      this.changePartMeshInSphere(meshes[i], vertexArr[i].indexes)
+      this.changePartMeshInSphere(meshes[i], vertexArr[i].indices)
     }
   }
 
   // изменение части меша модели по нужным вершинам
-  changePartMeshInSphere(inMesh, meshIndexesVertexForChanging) {
+  changePartMeshInSphere(inMesh, meshIndicesVertexForChanging) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
 
-    for (let j = 0, len = meshIndexesVertexForChanging.length; j < len; j++) {
-      positions[meshIndexesVertexForChanging[j]] *= 1.01
-      positions[meshIndexesVertexForChanging[j] + 1] *= 1.01
-      positions[meshIndexesVertexForChanging[j] + 2] *= 1.01
+    for (let j = 0, len = meshIndicesVertexForChanging.length; j < len; j++) {
+      positions[meshIndicesVertexForChanging[j]] *= 1.01
+      positions[meshIndicesVertexForChanging[j] + 1] *= 1.01
+      positions[meshIndicesVertexForChanging[j] + 2] *= 1.01
     }
 
     if (this.mIsUpdatableVertecies)
@@ -331,7 +331,7 @@ export default class CharacterModel {
     for (let j = 0, len = meshes.length; j < len; j++) {
       this.changePartMeshInSphere(
         meshes[j],
-        meshIndexesVertexForChanging.children[j].indexes,
+        meshIndicesVertexForChanging.children[j].indices,
       )
     }
   }
@@ -339,38 +339,53 @@ export default class CharacterModel {
   // вращение часть модели в сфере
   rotatePartModelInSphere(sphere, model) {
     const vertexArr = this.searchingVertexesModel(sphere, model)
-    console.log('vertexArr', vertexArr)
-
     const meshes = model.getChildMeshes()
 
     for (let i = 0; i < meshes.length; i++) {
-      this.rotatePartModelInSphere(meshes[i], vertexArr[i].indexes)
+      this.rotatePartMeshInSphere(meshes[i], vertexArr[i].indices, sphere)
     }
   }
 
   // вращение части меша модели по нужным вершинам
-  rotatePartModelInSphere(inMesh, meshIndexesVertexForChanging) {
+  rotatePartMeshInSphere(inMesh, meshIndicesVertexForChanging, sphere) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+    //!Без clone при срабатывании matrix.invert() модель исчезает
+    const matrix = inMesh.computeWorldMatrix(true).clone()
 
-    let axis = new Vector3(0, 1, 0) // Пример оси вращения (ось Y)
-    let angle = Math.PI / 4 // Пример угла вращения (45 градусов)
+    var rotationAxis = new Vector3(0, 0.1, 0) // Ось вращения (например, ось Y)
+    var rotationAngle = Math.PI / 3 // Угол вращения (45 градусов)
+    const localRotationAxis = Vector3.TransformCoordinates(rotationAxis, matrix)
 
-    for (let j = 0, len = meshIndexesVertexForChanging.length; j < len; j++) {
-      let localPosition = positions[index]
-      let vertex = Vector3.FromArray(localPosition)
-      vertex.rotateByQuaternionToRef(
-        Quaternion.RotationAxis(axis, angle),
-        vertex,
+    // Определяем ось вращения и угол поворота
+
+    for (let j = 0, len = meshIndicesVertexForChanging.length; j < len; j++) {
+      let inMeshVertex = new Vector3(
+        positions[j],
+        positions[j + 1],
+        positions[j + 2],
       )
-      inMesh.setVerticesData(VertexBuffer.PositionKind, vertex.asArray(), false)
+      // const localVertexPosition = Vector3.TransformCoordinates(
+      //   inMeshVertex,
+      //   matrix,
+      // )
 
-      // positions[meshIndexesVertexForChanging[j]] *= 1.01
-      // positions[meshIndexesVertexForChanging[j] + 1] *= 1.01
-      // positions[meshIndexesVertexForChanging[j] + 2] *= 1.01
+      var rotationQuaternion = Quaternion.RotationAxis(
+        rotationAxis,
+        rotationAngle,
+      ) // Создаем кватернион поворота
+
+      inMeshVertex.rotateByQuaternionToRef(rotationQuaternion, inMeshVertex) // Применяем поворот к точке
+
+      positions[j] = inMeshVertex.x
+      positions[j + 1] = inMeshVertex.y
+      positions[j + 2] = inMeshVertex.z
     }
+    // sphere.rotation.y = 40
+    // sphere.position = new Vector3(2, 2, 2)
+
     inMesh.updateVerticesData(
       VertexBuffer.PositionKind,
-      mesh.getVerticesData(VertexBuffer.PositionKind),
+      inMesh.getVerticesData(VertexBuffer.PositionKind),
       false,
       false,
     )
@@ -387,9 +402,9 @@ export default class CharacterModel {
     const meshes = inMesh.getChildMeshes()
 
     for (let j = 0, len = meshes.length; j < len; j++) {
-      this.rotatePartModelInSphere(
+      this.rotatePartMeshInSphere(
         meshes[j],
-        meshIndexesVertexForChanging.children[j].indexes,
+        meshIndicesVertexForChanging.children[j].indices,
       )
     }
   }
