@@ -86,6 +86,10 @@ import {
   VertexBuffer,
   GizmoManager,
   TransformNode,
+  ShaderStore,
+  ShaderMaterial,
+  ShaderLanguage,
+  UniformBuffer,
 } from "@babylonjs/core";
 import { Engine } from "@babylonjs/core/Engines/engine";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -198,7 +202,7 @@ onMounted(async () => {
 
   const scene = new Scene(engine);
 
-  const characterModel = new CharacterModel(scene);
+  const characterModel = new CharacterModel(scene, engine);
   characterModelGlob.value = characterModel;
 
   var camera = new ArcRotateCamera(
@@ -212,7 +216,7 @@ onMounted(async () => {
 
   camera.attachControl(canvas, true);
 
-  camera.lowerRadiusLimit = 1;
+  camera.lowerRadiusLimit = 0.2;
   camera.upperRadiusLimit = 7;
 
   camera.useBouncingBehavior = true;
@@ -229,7 +233,7 @@ onMounted(async () => {
 
   await characterModel.build();
 
-  console.log("mCharacter", characterModel.mCharacter.bones);
+  console.log("mCharacter", characterModel.mCharacter);
 
   // scene.onPointerObservable.add(function (evt) {
   //   console.log(evt.pickInfo.pickedMesh);
