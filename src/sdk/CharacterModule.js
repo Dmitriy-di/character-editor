@@ -49,7 +49,7 @@ export default class CharacterModel {
 
     this.mCharacter = await this.loadModel('Male_normal.glb') // обычное телосложение
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
-    this.mCharacter.position = new Vector3(0, 0, 0)
+    // this.mCharacter.position = new Vector3(0, 0, 0)
 
     this.mSkinny = await this.loadModel('Male_thin.glb') // худой
     // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
@@ -306,7 +306,6 @@ export default class CharacterModel {
       this.searchingVertexesMesh(sphere, meshes[i], vertexArr)
     }
 
-    console.log('Выбранные вершина модели', vertexArr)
     return vertexArr
   }
 
@@ -364,45 +363,30 @@ export default class CharacterModel {
   rotatePartMeshInSphere(inMesh, meshIndicesVertexForChanging, sphere) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
     //!Без clone при срабатывании matrix.invert() модель исчезает
-    // const matrixModel = inMesh.computeWorldMatrix(true).clone()
-    // // const invertedMatrix = matrixModel.invert()
+    let matrixModel = inMesh.computeWorldMatrix(true).clone()
+    // const invertedMatrix = matrixModel.invert()
 
-    // let matrixSphere = sphere.getWorldMatrix().clone().removeTranslation()
-    // let invertMatrixSphere = matrixSphere.invert()
-    var matrix = new Matrix()
-    Matrix.TranslationToRef(0, 0, 0, matrix)
-    Matrix.RotationYToRef(0, matrix)
-    Matrix.ScalingToRef(1, 2, 1, matrix)
+    // var matrix = new Matrix()
+    let matrix = new Matrix()
+    // Matrix.ScalingToRef(-1, 1, 1, matrix)
+    Matrix.RotationYToRef(Math.PI / 2, matrixModel)
+    // Matrix.TranslationToRef(0, 0, 0, matrix)
+
+    // Применяем матрицу масштабирования к существующей матрице трансформации
+    // matrixModel.multiplyToRef(matrix, matrixModel)
 
     for (let j = 0, len = meshIndicesVertexForChanging.length; j < len; j++) {
       let localVertex = new Vector3(
         positions[meshIndicesVertexForChanging[j]],
-        positions[meshIndicesVertexForChanging[j + 1]],
-        positions[meshIndicesVertexForChanging[j + 2]],
+        positions[meshIndicesVertexForChanging[j] + 1],
+        positions[meshIndicesVertexForChanging[j] + 2],
       )
 
-      const neVertex = Vector3.TransformCoordinates(localVertex, matrix)
+      const newVertex = Vector3.TransformCoordinates(localVertex, matrixModel)
 
-      // const globalVertex = Vector3.TransformCoordinates(
-      //   localVertex,
-      //   matrixModel,
-      // )
-
-      // var globalChangedVertex = Vector3.TransformCoordinates(
-      //   globalVertex,
-      //   invertMatrixSphere,
-      // )
-
-      // const localChangedVertex = Vector3.TransformCoordinates(
-      //   globalChangedVertex,
-      //   matrixModel,
-      // )
-      // console.log('localVertex', localVertex)
-      // console.log('localChangedVertex', localChangedVertex)
-
-      positions[meshIndicesVertexForChanging[j]] = neVertex.x
-      positions[meshIndicesVertexForChanging[j + 1]] = neVertex.y
-      positions[meshIndicesVertexForChanging[j + 2]] = neVertex.z
+      positions[meshIndicesVertexForChanging[j]] = newVertex.x
+      positions[meshIndicesVertexForChanging[j] + 1] = newVertex.y
+      positions[meshIndicesVertexForChanging[j] + 2] = newVertex.z
     }
 
     // нужно новый буффер создать, так как прошлый был не обновляемым
