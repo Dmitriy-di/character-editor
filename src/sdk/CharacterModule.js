@@ -42,7 +42,7 @@ export default class CharacterModel {
     this.mNormal.position = new Vector3(-4, 0, 0)
     this.mNormal.scaling = new Vector3(0, 0, 0)
 
-    this.mAthletic = await this.loadModel('Male_thin.glb') // накачанный
+    this.mAthletic = await this.loadModel('Male_Atlet.glb') // накачанный
     // this.mAthletic.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mAthletic.position = new Vector3(-2, 0, 0)
     this.mAthletic.scaling = new Vector3(0, 0, 0)
@@ -51,8 +51,7 @@ export default class CharacterModel {
     // this.mCharacter.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mCharacter.position = new Vector3(0, 0, 0)
 
-    // //!Временно вместо тонкого взял качка, т.к. у тонкого не такое же количество вершин, что у других
-    this.mSkinny = await this.loadModel('Male_Atlet.glb') // худой
+    this.mSkinny = await this.loadModel('Male_thin.glb') // худой
     // this.mSkinny.rotate(new Vector3(0, 1, 0), Math.PI, Space.LOCAL)
     this.mSkinny.position = new Vector3(2, 0, 0)
     this.mSkinny.scaling = new Vector3(0, 0, 0)
@@ -78,127 +77,15 @@ export default class CharacterModel {
 
   // подгрузить модель персонажа
   async loadModel(inFilename) {
-    Effect.ShadersStore['customVertexShader'] =
-      '\r\n' +
-      'precision highp float;\r\n' +
-      '// Attributes\r\n' +
-      'attribute vec3 position;\r\n' +
-      'attribute vec2 uv;\r\n' +
-      '// Uniforms\r\n' +
-      'uniform mat4 worldViewProjection;\r\n' +
-      '// Varying\r\n' +
-      'varying vec2 vUV;\r\n' +
-      'void main(void) {\r\n' +
-      '    gl_Position = worldViewProjection * vec4(position, 1.0);\r\n' +
-      '    vUV = uv;\r\n' +
-      '}\r\n'
-
-    Effect.ShadersStore['customFragmentShader'] =
-      '\r\n' +
-      'precision highp float;\r\n' +
-      'varying vec2 vUV;\r\n' +
-      'uniform sampler2D textureSampler;\r\n' +
-      'void main(void) {\r\n' +
-      '    gl_FragColor = texture2D(textureSampler, vUV);\r\n' +
-      '}\r\n'
-
-    var shaderMaterial = new ShaderMaterial(
-      'shader',
-      this.mScene,
-      {
-        vertex: 'custom',
-        fragment: 'custom',
-      },
-      {
-        attributes: ['position', 'normal', 'uv'],
-        uniforms: [
-          'world',
-          'worldView',
-          'worldViewProjection',
-          'view',
-          'projection',
-        ],
-      },
-    )
-
-    const mainTexture = new Texture('assets/textures/crate.png', this.mScene)
-
-    shaderMaterial.setTexture('textureSampler', mainTexture)
-
-    shaderMaterial.backFaceCulling = false
-
-    // var box = MeshBuilder.CreateBox('box', {}, this.mScene)
-    // box.material = shaderMaterial
-
     const res = await SceneLoader.ImportMeshAsync(
       '',
-      'assets/models2/',
+      'assets/models/models15/',
       inFilename,
       this.mScene,
     )
 
-    for (let mesh of res.meshes) {
-      console.log('mesh', mesh)
-      mesh.material = shaderMaterial
-    }
     let resMesh = res.meshes[0]
     return resMesh
-
-    // Effect.ShadersStore['customVertexShader'] = `
-    // precision highp float;
-    // #include<instancesDeclaration>
-    // attribute vec3 position;
-    // attribute vec4 color;
-    // attribute vec2 uv; // Добавлен атрибут uv
-    // uniform mat4 viewProjection;
-    // varying vec3 vert_color;
-    // varying vec2 frag_uv; // Добавлен varying для передачи uv во фрагментный шейдер
-
-    // void main(void) {
-    //     #include<instancesVertex>
-    //     vert_color = color.rgb;
-    //     frag_uv = uv; // Передаем значение uv во фрагментный шейдер
-    //     gl_Position = viewProjection * finalWorld * vec4(position, 1.0);
-    // }`
-
-    // Effect.ShadersStore['customFragmentShader'] = `
-    // uniform sampler2D textureSampler;
-    // precision mediump float;
-    // varying vec3 vert_color;
-    // varying vec2 frag_uv;
-
-    // void main(void) {
-    //     vec4 texColor = texture2D(textureSampler, frag_uv);
-    //     gl_FragColor = vec4(vert_color, 1.0) * texColor; // Умножаем цвет вершины на цвет из текстуры
-    // }
-    // `
-
-    // let myMat = new ShaderMaterial(
-    //   'myMat',
-    //   this.mScene,
-    //   {
-    //     vertex: 'custom',
-    //     fragment: 'custom',
-    //   },
-    //   {
-    //     attributes: ['position'],
-    //     uniforms: ['world', 'viewProjection'],
-    //   },
-    // )
-
-    // const mainTexture = new Texture('assets/textures/lavatile.jpg', this.mScene)
-    // myMat.setTexture('textureSampler', mainTexture)
-
-    // const res = await SceneLoader.ImportMeshAsync(
-    //   '',
-    //   'assets/models2/',
-    //   inFilename,
-    //   this.mScene,
-    // )
-
-    // for (let mesh of res.meshes) mesh.material = myMat
-    // let resMesh = res.meshes[0]
-    // return resMesh
   }
 
   // изменить модель в соответствии с весами
@@ -239,13 +126,16 @@ export default class CharacterModel {
     inAthleticVal,
   ) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
-    let UVKind = inMesh.getVerticesData(VertexBuffer.UVKind)
-    const len = positions.length
     //! Убрать получение массивов координат всех моделей, на получение массива координат только нужной модели
     const positionsN = inMeshN.getVerticesData(VertexBuffer.PositionKind)
     const positionsS = inMeshS.getVerticesData(VertexBuffer.PositionKind)
     const positionsF = inMeshF.getVerticesData(VertexBuffer.PositionKind)
     const positionsA = inMeshA.getVerticesData(VertexBuffer.PositionKind)
+
+    // console.log('length Normal', positionsN.length)
+    // console.log('length Skinny', positionsS.length)
+    // console.log('length Fat', positionsF.length)
+    // console.log('length Athlet', positionsA.length)
 
     // inVal - модель, в сторону которой меняется текущая модель, positionType - массив координат вершин модели inVal
     const { inVal, positionsType } = inSkinnyVal
@@ -473,98 +363,49 @@ export default class CharacterModel {
   // вращение части меша модели по нужным вершинам
   rotatePartMeshInSphere(inMesh, meshIndicesVertexForChanging, sphere) {
     let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
-    let normalsMesh = inMesh.getVerticesData(VertexBuffer.NormalKind)
-    let uvsMesh = inMesh.getVerticesData(VertexBuffer.UVKind)
     //!Без clone при срабатывании matrix.invert() модель исчезает
-    // const matrix = inMesh.computeWorldMatrix(true).clone()
+    // const matrixModel = inMesh.computeWorldMatrix(true).clone()
+    // // const invertedMatrix = matrixModel.invert()
 
-    // Определяем ось вращения и угол поворота
-    let vertices = []
-    let indices = []
-    let normals = []
-    let uvs = []
+    // let matrixSphere = sphere.getWorldMatrix().clone().removeTranslation()
+    // let invertMatrixSphere = matrixSphere.invert()
+    var matrix = new Matrix()
+    Matrix.TranslationToRef(0, 0, 0, matrix)
+    Matrix.RotationYToRef(0, matrix)
+    Matrix.ScalingToRef(1, 2, 1, matrix)
 
     for (let j = 0, len = meshIndicesVertexForChanging.length; j < len; j++) {
-      vertices.push(
-        positions[meshIndicesVertexForChanging[j]],
-        positions[meshIndicesVertexForChanging[j + 1]],
-        positions[meshIndicesVertexForChanging[j + 2]],
-      )
-      const point = new Vector3(
+      let localVertex = new Vector3(
         positions[meshIndicesVertexForChanging[j]],
         positions[meshIndicesVertexForChanging[j + 1]],
         positions[meshIndicesVertexForChanging[j + 2]],
       )
 
-      console.log('point', point.x)
-      console.log('positions', positions[meshIndicesVertexForChanging[0]])
+      const neVertex = Vector3.TransformCoordinates(localVertex, matrix)
 
-      point.x = 1
-      console.log('point', point.x)
-      console.log('positions', positions[meshIndicesVertexForChanging[0]])
-
-      break
-
-      // normals.push(
-      //   normalsMesh[meshIndicesVertexForChanging[j]],
-      //   normalsMesh[meshIndicesVertexForChanging[j + 1]],
-      //   normalsMesh[meshIndicesVertexForChanging[j + 2]],
-      // )
-      // uvs.push(
-      //   uvsMesh[meshIndicesVertexForChanging[j]],
-      //   uvsMesh[meshIndicesVertexForChanging[j + 1]],
-      //   uvsMesh[meshIndicesVertexForChanging[j + 2]],
+      // const globalVertex = Vector3.TransformCoordinates(
+      //   localVertex,
+      //   matrixModel,
       // )
 
-      // let inMeshVertex = new Vector3(
-      //   positions[j],
-      //   positions[j + 1],
-      //   positions[j + 2],
+      // var globalChangedVertex = Vector3.TransformCoordinates(
+      //   globalVertex,
+      //   invertMatrixSphere,
       // )
-      // // const localVertexPosition = Vector3.TransformCoordinates(
-      // //   inMeshVertex,
-      // //   matrix,
-      // // )
 
-      // let rotationQuaternion = Quaternion.RotationAxis(
-      //   rotationAxis,
-      //   rotationAngle,
-      // ) // Создаем кватернион поворота
+      // const localChangedVertex = Vector3.TransformCoordinates(
+      //   globalChangedVertex,
+      //   matrixModel,
+      // )
+      // console.log('localVertex', localVertex)
+      // console.log('localChangedVertex', localChangedVertex)
 
-      // inMeshVertex.rotateByQuaternionToRef(rotationQuaternion, inMeshVertex) // Применяем поворот к точке
-
-      // positions[j] = inMeshVertex.x
-      // positions[j + 1] = inMeshVertex.y
-      // positions[j + 2] = inMeshVertex.z
+      positions[meshIndicesVertexForChanging[j]] = neVertex.x
+      positions[meshIndicesVertexForChanging[j + 1]] = neVertex.y
+      positions[meshIndicesVertexForChanging[j + 2]] = neVertex.z
     }
 
-    // for (let i = 0, len = vertices.length / 3; i < len; i++) {
-    //   indices.push(i)
-    // }
-
-    // // Создание меша
-    // let newMesh = new Mesh('customMesh', this.mScene)
-
-    // newMesh.setVerticesData(VertexBuffer.PositionKind, vertices, false)
-    // newMesh.setVerticesData(VertexBuffer.NormalKind, normals, false)
-    // newMesh.setVerticesData(VertexBuffer.UVKind, uvs, false)
-    // newMesh.setIndices(indices)
-
-    // // sphere.addChild(newMesh)
-    // let gizmoManager = new GizmoManager(this.mScene)
-    // gizmoManager.boundingBoxGizmoEnabled = true
-    // gizmoManager.attachableMeshes = [newMesh]
-
-    // console.log('newMesh', newMesh)
-
-    //!
-    inMesh.updateVerticesData(
-      VertexBuffer.PositionKind,
-      inMesh.getVerticesData(VertexBuffer.PositionKind),
-      false,
-      false,
-    )
-
+    // нужно новый буффер создать, так как прошлый был не обновляемым
     if (this.mIsUpdatableVertecies)
       inMesh.updateVerticesData(
         VertexBuffer.PositionKind,
@@ -573,6 +414,8 @@ export default class CharacterModel {
         true,
       )
     else inMesh.setVerticesData(VertexBuffer.PositionKind, positions, true)
+    //   I think the problem is that updateVerticesData returns early without doing anything if the buffer doesn’t exist already or if it isn’t updatable, but if you use setVerticesData it will create a new buffer for you and set it regardless. Try doing it like below.
+    //  inSubMesh.updateVerticesData(VertexBuffer.PositionKind, positions);
 
     const meshes = inMesh.getChildMeshes()
 
