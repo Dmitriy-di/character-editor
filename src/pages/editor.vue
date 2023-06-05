@@ -46,6 +46,7 @@
 
     <q-btn @click="changeModel">Увеличить</q-btn>
     <q-btn @click="rotateModel">Повернуть</q-btn>
+    <q-btn @click="createJSON">Сформировать JSON</q-btn>
 
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
@@ -175,6 +176,12 @@ const rotateModel = () => {
   );
 };
 
+const createJSON = () => {
+  characterModelGlob.value.createJSONVertexWithOneCoordModel(
+    characterModelGlob.value.mCharacter
+  );
+};
+
 const toggleGizmoManager = function (arrValues) {
   gizmoManager.value.positionGizmoEnabled = arrValues[0];
   gizmoManager.value.rotationGizmoEnabled = arrValues[1];
@@ -243,14 +250,13 @@ onMounted(async () => {
   // }, PointerEventTypes.POINTERUP);
 
   //Добавление сферы на сцену
-  sphere = Mesh.CreateSphere(`sphere`, 16, 0.4, scene);
+  sphere = Mesh.CreateSphere(`sphere`, 16, 2, scene);
 
   sphere.position.y = 1;
 
   let material = new StandardMaterial("transparentMaterial", scene);
   material.alpha = 0.3; // Установка прозрачности (от 0 до 1)
   sphere.material = material;
-
   sphere.actionManager = new ActionManager(scene);
   sphere.material.diffuseColor = Color3.Blue();
   gizmoManager.value = new GizmoManager(scene);

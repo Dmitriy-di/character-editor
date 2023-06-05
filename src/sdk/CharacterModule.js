@@ -19,6 +19,8 @@ import {
   Effect,
 } from '@babylonjs/core'
 import { Texture } from '@babylonjs/core/Materials/Textures/texture'
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial'
+import { Color3 } from '@babylonjs/core/Maths/math.color'
 
 // редактируемая модель персонажа
 export default class CharacterModel {
@@ -274,7 +276,6 @@ export default class CharacterModel {
       sphere,
       inMesh,
     )
-
     const childMesh = {
       name: inMesh.name,
       indices: indicesModelInSphere,
@@ -297,7 +298,7 @@ export default class CharacterModel {
   }
 
   // функция, начинающая поиск вершин модели по условию
-  searchingVertexesModel(sphere, model) {
+  searchVertexesModel(sphere, model) {
     let vertexArr = []
 
     const meshes = model.getChildMeshes()
@@ -311,7 +312,7 @@ export default class CharacterModel {
 
   // изменение части модели по нужным вершинам
   changePartModelInSphere(sphere, model) {
-    const vertexArr = this.searchingVertexesModel(sphere, model)
+    const vertexArr = this.searchVertexesModel(sphere, model)
     console.log('vertexArr', vertexArr)
     const meshes = model.getChildMeshes()
 
@@ -351,7 +352,7 @@ export default class CharacterModel {
 
   // вращение часть модели в сфере
   rotatePartModelInSphere(sphere, model) {
-    const vertexArr = this.searchingVertexesModel(sphere, model)
+    const vertexArr = this.searchVertexesModel(sphere, model)
     const meshes = model.getChildMeshes()
 
     for (let i = 0; i < meshes.length; i++) {
@@ -366,10 +367,9 @@ export default class CharacterModel {
     let matrixModel = inMesh.computeWorldMatrix(true).clone()
     // const invertedMatrix = matrixModel.invert()
 
-    // var matrix = new Matrix()
     let matrix = new Matrix()
-    // Matrix.ScalingToRef(-1, 1, 1, matrix)
-    Matrix.RotationYToRef(Math.PI / 2, matrixModel)
+    Matrix.ScalingToRef(-0.5, 0.5, 0.5, matrix)
+    // Matrix.RotationYToRef(Math.PI / 4, matrixModel)
     // Matrix.TranslationToRef(0, 0, 0, matrix)
 
     // Применяем матрицу масштабирования к существующей матрице трансформации
@@ -382,7 +382,7 @@ export default class CharacterModel {
         positions[meshIndicesVertexForChanging[j] + 2],
       )
 
-      const newVertex = Vector3.TransformCoordinates(localVertex, matrixModel)
+      const newVertex = Vector3.TransformCoordinates(localVertex, matrix)
 
       positions[meshIndicesVertexForChanging[j]] = newVertex.x
       positions[meshIndicesVertexForChanging[j] + 1] = newVertex.y
@@ -409,5 +409,203 @@ export default class CharacterModel {
         meshIndicesVertexForChanging.children[j].indices,
       )
     }
+  }
+
+  // поиск вершин меша, имеющих одни и те же координаты
+  createJSONVertexWithOneCoordMesh(inMesh = null, inMesh2 = null, parentMesh) {
+    // const indicesModelInSphere = this.getIndicesVertexesModelInSphere(
+    //   sphere,
+    //   inMesh,
+    // )
+    const positionsModel = inMesh.getVerticesData(VertexBuffer.PositionKind)
+    const positionsModel2 = inMesh2.getVerticesData(VertexBuffer.PositionKind)
+    let indices = {}
+
+    // for (let i = 0, len1 = positionsModel.length; i < len1; i += 3) {
+    //   const posVertexI = new Vector3(
+    //     positionsModel[i],
+    //     positionsModel[i + 1],
+    //     positionsModel[i + 2],
+    //   )
+    //   for (let j = i + 3, len2 = positionsModel.length; j < len2; j += 3) {
+    //     const posVertexJ = new Vector3(
+    //       positionsModel[j],
+    //       positionsModel[j + 1],
+    //       positionsModel[j + 2],
+    //     )
+    //     const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
+    //     posVertexI, posVertexJ
+    //     if (distance < 0.1 ** 323) {
+    //       if (posVertexJ in indices) {
+    //         let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         let material = new StandardMaterial(
+    //           'transparentMaterial',
+    //           this.mScene,
+    //         )
+    //         sphere.material = material
+    //         sphere.material.diffuseColor = Color3.Red()
+    //         sphere.position = posVertexJ
+    //         indices[posVertexI].push(j)
+    //       } else {
+    //         let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         let material = new StandardMaterial(
+    //           'transparentMaterial',
+    //           this.mScene,
+    //         )
+    //         sphere1.material = material
+    //         sphere1.material.diffuseColor = Color3.Red()
+    //         sphere1.position = posVertexJ
+    //         sphere2.material = material
+    //         sphere2.material.diffuseColor = Color3.Red()
+    //         sphere2.position = posVertexI
+    //         indices[posVertexI] = [i, j]
+    //       }
+    //     }
+    //   }
+    // }
+
+    for (let i = 0, len1 = positionsModel.length; i < len1; i += 3) {
+      const posVertexI = new Vector3(
+        positionsModel[i],
+        positionsModel[i + 1],
+        positionsModel[i + 2],
+      )
+      for (let j = 0, len2 = positionsModel2.length; j < len2; j += 3) {
+        const posVertexJ = new Vector3(
+          positionsModel2[j],
+          positionsModel2[j + 1],
+          positionsModel2[j + 2],
+        )
+        const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
+        if (distance < 0.1 ** 10) {
+          let doubleNameMesh = inMesh.name + inMesh2.name
+          if (doubleNameMesh in indices) {
+            // indices[inMesh.name + inMesh2.name][inMesh2.name].push(j)
+            if (i in indices[doubleNameMesh]) {
+              // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let material = new StandardMaterial(
+              //   'transparentMaterial',
+              //   this.mScene,
+              // )
+              // sphere.material = material
+              // sphere.material.diffuseColor = Color3.Red()
+              // sphere.position = posVertexJ
+              indices[doubleNameMesh][i].push(j)
+            } else {
+              // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let material = new StandardMaterial(
+              //   'transparentMaterial',
+              //   this.mScene,
+              // )
+              // sphere1.material = material
+              // sphere1.material.diffuseColor = Color3.Red()
+              // sphere1.position = posVertexJ
+              // sphere2.material = material
+              // sphere2.material.diffuseColor = Color3.Red()
+              // sphere2.position = posVertexI
+              indices[doubleNameMesh][i] = [j]
+            }
+          } else {
+            // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+            // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+            // let material = new StandardMaterial(
+            //   'transparentMaterial',
+            //   this.mScene,
+            // )
+            // sphere1.material = material
+            // sphere1.material.diffuseColor = Color3.Red()
+            // sphere1.position = posVertexJ
+            // sphere2.material = material
+            // sphere2.material.diffuseColor = Color3.Red()
+            // sphere2.position = posVertexI
+            indices[doubleNameMesh] = {}
+            indices[doubleNameMesh][i] = [j]
+          }
+        }
+      }
+    }
+
+    const childMesh = {
+      name: inMesh.name,
+      indices: indices,
+      children: [],
+    }
+
+    if (parentMesh.children == undefined) {
+      parentMesh.push(childMesh)
+    } else {
+      parentMesh.children.push(childMesh)
+    }
+
+    const meshes = inMesh.getChildMeshes()
+
+    for (let j = 0, len = meshes.length; j < len; j++) {
+      this.searchingVertexesMesh(meshes[j], childMesh)
+    }
+  }
+
+  // функция, начинающая поиск вершин модели, имеющих одни и те же координаты
+  createJSONVertexWithOneCoordModel(model) {
+    let vertexWithOneCoord = []
+
+    // let obj = {}
+    // let arr1 = [1, 2, 3]
+    // let arr2 = [4, 5]
+    // obj[arr1] = 'hey1'
+    // obj[(1, 2, 3)] = obj['1,2,3'] + ' Dima'
+    // obj[arr2] = 'hey2'
+    // console.log([4, 5] in obj)
+    // for (let a in obj) {
+    //   console.log('key', a)
+    //   console.log('value', obj[a])
+    // }
+
+    const meshes = model.getChildMeshes()
+    console.log(meshes)
+    for (let i = 0; i < meshes.length - 1; i++) {
+      for (let j = i + 1; j < meshes.length; j++) {
+        this.createJSONVertexWithOneCoordMesh(
+          meshes[i],
+          meshes[j],
+          vertexWithOneCoord,
+        )
+      }
+    }
+
+    // for (let i = 0; i < meshes.length; i++) {
+    //   this.createJSONVertexWithOneCoordMesh(meshes[i], '', vertexWithOneCoord)
+    // }
+
+    // console.log('vertexWithOneCoord', vertexWithOneCoord)
+    // console.log(
+    //   'vertexWithOneCoord',
+    //   Object.keys(vertexWithOneCoord[0].indices).length,
+    // )
+    // console.log(
+    //   'vertexWithOneCoord',
+    //   Object.keys(vertexWithOneCoord[1].indices).length,
+    // )
+    // console.log(
+    //   'vertexWithOneCoord',
+    //   Object.keys(vertexWithOneCoord[2].indices).length,
+    // )
+    // console.log(
+    //   'vertexWithOneCoord',
+    //   Object.keys(vertexWithOneCoord[3].indices).length,
+    // )
+
+    // console.log('vertexWithOneCoord', vertexWithOneCoord)
+    // console.log('vertexWithOneCoord', vertexWithOneCoord[0].indices)
+    // console.log('vertexWithOneCoord', vertexWithOneCoord[1].indices)
+    // console.log('vertexWithOneCoord', vertexWithOneCoord[2].indices)
+    // console.log('vertexWithOneCoord', vertexWithOneCoord[3].indices)
+    // console.log(vertexWithOneCoord)
+    let a = JSON.stringify(vertexWithOneCoord)
+    console.log(a)
+    let b = JSON.parse(a)
+    console.log(b)
+    return vertexWithOneCoord
   }
 }
