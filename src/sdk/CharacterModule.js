@@ -21,6 +21,7 @@ import {
 import { Texture } from '@babylonjs/core/Materials/Textures/texture'
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial'
 import { Color3 } from '@babylonjs/core/Maths/math.color'
+import { data } from 'src/utils/neighboringVertices'
 
 // редактируемая модель персонажа
 export default class CharacterModel {
@@ -496,45 +497,22 @@ export default class CharacterModel {
         const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
         if (distance < 0.1 ** 10) {
           let doubleNameMesh = inMesh.name + inMesh2.name
-          if (doubleNameMesh in indices) {
-            // indices[inMesh.name + inMesh2.name][inMesh2.name].push(j)
-            if (i in indices[doubleNameMesh]) {
-              // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-              // let material = new StandardMaterial(
-              //   'transparentMaterial',
-              //   this.mScene,
-              // )
-              // sphere.material = material
-              // sphere.material.diffuseColor = Color3.Red()
-              // sphere.position = posVertexJ
-              dx = posVertexJ.x - posVertexI.x
-              dy = posVertexJ.y - posVertexI.y
-              dz = posVertexJ.z - posVertexI.z
+          if (i in indices) {
+            // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+            // let material = new StandardMaterial(
+            //   'transparentMaterial',
+            //   this.mScene,
+            // )
+            // sphere.material = material
+            // sphere.material.diffuseColor = Color3.Red()
+            // sphere.position = posVertexJ
 
-              indices[doubleNameMesh][i][i].push(j)
-              indices[doubleNameMesh][i]['dist'].push(dx, dy, dz)
-            } else {
-              // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-              // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-              // let material = new StandardMaterial(
-              //   'transparentMaterial',
-              //   this.mScene,
-              // )
-              // sphere1.material = material
-              // sphere1.material.diffuseColor = Color3.Red()
-              // sphere1.position = posVertexJ
-              // sphere2.material = material
-              // sphere2.material.diffuseColor = Color3.Red()
-              // sphere2.position = posVertexI
-              dx = posVertexJ.x - posVertexI.x
-              dy = posVertexJ.y - posVertexI.y
-              dz = posVertexJ.z - posVertexI.z
+            dx = posVertexJ.x - posVertexI.x
+            dy = posVertexJ.y - posVertexI.y
+            dz = posVertexJ.z - posVertexI.z
 
-              let obj = {}
-              obj[i] = [j]
-              obj['dist'] = [dx, dy, dz]
-              indices[doubleNameMesh][i] = obj
-            }
+            indices[i][i].push(j)
+            indices[i]['dist'].push(dx, dy, dz)
           } else {
             // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
             // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
@@ -555,15 +533,14 @@ export default class CharacterModel {
             let obj = {}
             obj[i] = [j]
             obj['dist'] = [dx, dy, dz]
-            indices[doubleNameMesh] = {}
-            indices[doubleNameMesh][i] = obj
+            indices[i] = obj
           }
         }
       }
     }
 
     const childMesh = {
-      name: inMesh.name,
+      name: inMesh.name + inMesh2.name,
       indices: indices,
       children: [],
     }
