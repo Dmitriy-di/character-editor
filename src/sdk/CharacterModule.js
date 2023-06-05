@@ -418,44 +418,123 @@ export default class CharacterModel {
     //   inMesh,
     // )
     const positionsModel = inMesh.getVerticesData(VertexBuffer.PositionKind)
-    // const positionsModel2 = inMesh2.getVerticesData(VertexBuffer.PositionKind)
+    const positionsModel2 = inMesh2?.getVerticesData(VertexBuffer.PositionKind)
     let indices = {}
     const dist = 0.1 ** 323
     let dx = 0
     let dy = 0
     let dz = 0
+    // for (let i = 0, len1 = positionsModel.length; i < len1; i += 3) {
+    //   const posVertexI = new Vector3(
+    //     positionsModel[i],
+    //     positionsModel[i + 1],
+    //     positionsModel[i + 2],
+    //   )
+    //   for (let j = i + 3, len2 = positionsModel.length; j < len2; j += 3) {
+    //     const posVertexJ = new Vector3(
+    //       positionsModel[j],
+    //       positionsModel[j + 1],
+    //       positionsModel[j + 2],
+    //     )
+    //     const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
+
+    //     if (distance < dist) {
+    //       if (distance != 0) {
+    //         console.log(distance)
+    //       }
+    //       if (i in indices) {
+    //         // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         // let material = new StandardMaterial(
+    //         //   'transparentMaterial',
+    //         //   this.mScene,
+    //         // )
+    //         // sphere.material = material
+    //         // sphere.material.diffuseColor = Color3.Red()
+    //         // sphere.position = posVertexJ
+    //         dx = posVertexJ.x - posVertexI.x
+    //         dy = posVertexJ.y - posVertexI.y
+    //         dz = posVertexJ.z - posVertexI.z
+    //         indices[i][i].push(j)
+    //         indices[i]['dist'].push(dx, dy, dz)
+    //       } else {
+    //         // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+    //         // let material = new StandardMaterial(
+    //         //   'transparentMaterial',
+    //         //   this.mScene,
+    //         // )
+    //         // sphere1.material = material
+    //         // sphere1.material.diffuseColor = Color3.Red()
+    //         // sphere1.position = posVertexJ
+    //         // sphere2.material = material
+    //         // sphere2.material.diffuseColor = Color3.Red()
+    //         // sphere2.position = posVertexI
+    //         dx = posVertexJ.x - posVertexI.x
+    //         dy = posVertexJ.y - posVertexI.y
+    //         dz = posVertexJ.z - posVertexI.z
+    //         let obj = {}
+    //         obj[i] = [j]
+    //         obj['dist'] = [dx, dy, dz]
+    //         indices[i] = obj
+    //       }
+    //     }
+    //   }
+    // }
+
     for (let i = 0, len1 = positionsModel.length; i < len1; i += 3) {
       const posVertexI = new Vector3(
         positionsModel[i],
         positionsModel[i + 1],
         positionsModel[i + 2],
       )
-      for (let j = i + 3, len2 = positionsModel.length; j < len2; j += 3) {
+      for (let j = 0, len2 = positionsModel2.length; j < len2; j += 3) {
         const posVertexJ = new Vector3(
-          positionsModel[j],
-          positionsModel[j + 1],
-          positionsModel[j + 2],
+          positionsModel2[j],
+          positionsModel2[j + 1],
+          positionsModel2[j + 2],
         )
         const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
+        if (distance < 0.1 ** 10) {
+          let doubleNameMesh = inMesh.name + inMesh2.name
+          if (doubleNameMesh in indices) {
+            // indices[inMesh.name + inMesh2.name][inMesh2.name].push(j)
+            if (i in indices[doubleNameMesh]) {
+              // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let material = new StandardMaterial(
+              //   'transparentMaterial',
+              //   this.mScene,
+              // )
+              // sphere.material = material
+              // sphere.material.diffuseColor = Color3.Red()
+              // sphere.position = posVertexJ
+              dx = posVertexJ.x - posVertexI.x
+              dy = posVertexJ.y - posVertexI.y
+              dz = posVertexJ.z - posVertexI.z
 
-        if (distance < dist) {
-          if (distance != 0) {
-            console.log(distance)
-          }
-          if (i in indices) {
-            // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-            // let material = new StandardMaterial(
-            //   'transparentMaterial',
-            //   this.mScene,
-            // )
-            // sphere.material = material
-            // sphere.material.diffuseColor = Color3.Red()
-            // sphere.position = posVertexJ
-            dx = posVertexJ.x - posVertexI.x
-            dy = posVertexJ.y - posVertexI.y
-            dz = posVertexJ.z - posVertexI.z
-            indices[i][i].push(j)
-            indices[i]['dist'].push(dx, dy, dz)
+              indices[doubleNameMesh][i][i].push(j)
+              indices[doubleNameMesh][i]['dist'].push(dx, dy, dz)
+            } else {
+              // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
+              // let material = new StandardMaterial(
+              //   'transparentMaterial',
+              //   this.mScene,
+              // )
+              // sphere1.material = material
+              // sphere1.material.diffuseColor = Color3.Red()
+              // sphere1.position = posVertexJ
+              // sphere2.material = material
+              // sphere2.material.diffuseColor = Color3.Red()
+              // sphere2.position = posVertexI
+              dx = posVertexJ.x - posVertexI.x
+              dy = posVertexJ.y - posVertexI.y
+              dz = posVertexJ.z - posVertexI.z
+
+              let obj = {}
+              obj[i] = [j]
+              obj['dist'] = [dx, dy, dz]
+              indices[doubleNameMesh][i] = obj
+            }
           } else {
             // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
             // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
@@ -472,76 +551,16 @@ export default class CharacterModel {
             dx = posVertexJ.x - posVertexI.x
             dy = posVertexJ.y - posVertexI.y
             dz = posVertexJ.z - posVertexI.z
+
             let obj = {}
             obj[i] = [j]
             obj['dist'] = [dx, dy, dz]
-            indices[i] = obj
+            indices[doubleNameMesh] = {}
+            indices[doubleNameMesh][i] = obj
           }
         }
       }
     }
-
-    // for (let i = 0, len1 = positionsModel.length; i < len1; i += 3) {
-    //   const posVertexI = new Vector3(
-    //     positionsModel[i],
-    //     positionsModel[i + 1],
-    //     positionsModel[i + 2],
-    //   )
-    //   for (let j = 0, len2 = positionsModel2.length; j < len2; j += 3) {
-    //     const posVertexJ = new Vector3(
-    //       positionsModel2[j],
-    //       positionsModel2[j + 1],
-    //       positionsModel2[j + 2],
-    //     )
-    //     const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
-    //     if (distance < 0.1 ** 10) {
-    //       let doubleNameMesh = inMesh.name + inMesh2.name
-    //       if (doubleNameMesh in indices) {
-    //         // indices[inMesh.name + inMesh2.name][inMesh2.name].push(j)
-    //         if (i in indices[doubleNameMesh]) {
-    //           // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-    //           // let material = new StandardMaterial(
-    //           //   'transparentMaterial',
-    //           //   this.mScene,
-    //           // )
-    //           // sphere.material = material
-    //           // sphere.material.diffuseColor = Color3.Red()
-    //           // sphere.position = posVertexJ
-    //           indices[doubleNameMesh][i].push(j)
-    //         } else {
-    //           // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-    //           // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-    //           // let material = new StandardMaterial(
-    //           //   'transparentMaterial',
-    //           //   this.mScene,
-    //           // )
-    //           // sphere1.material = material
-    //           // sphere1.material.diffuseColor = Color3.Red()
-    //           // sphere1.position = posVertexJ
-    //           // sphere2.material = material
-    //           // sphere2.material.diffuseColor = Color3.Red()
-    //           // sphere2.position = posVertexI
-    //           indices[doubleNameMesh][i] = [j]
-    //         }
-    //       } else {
-    //         // let sphere1 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-    //         // let sphere2 = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
-    //         // let material = new StandardMaterial(
-    //         //   'transparentMaterial',
-    //         //   this.mScene,
-    //         // )
-    //         // sphere1.material = material
-    //         // sphere1.material.diffuseColor = Color3.Red()
-    //         // sphere1.position = posVertexJ
-    //         // sphere2.material = material
-    //         // sphere2.material.diffuseColor = Color3.Red()
-    //         // sphere2.position = posVertexI
-    //         indices[doubleNameMesh] = {}
-    //         indices[doubleNameMesh][i] = [j]
-    //       }
-    //     }
-    //   }
-    // }
 
     const childMesh = {
       name: inMesh.name,
@@ -568,30 +587,26 @@ export default class CharacterModel {
 
     const meshes = model.getChildMeshes()
     console.log(meshes)
-    // for (let i = 0; i < meshes.length - 1; i++) {
-    //   for (let j = i + 1; j < meshes.length; j++) {
-    //     this.createJSONVertexWithOneCoordMesh(
-    //       meshes[i],
-    //       meshes[j],
-    //       vertexWithOneCoord,
-    //     )
-    //   }
-    // }
-
-    for (let i = 0; i < meshes.length; i++) {
-      this.createJSONVertexWithOneCoordMesh(meshes[i], '', vertexWithOneCoord)
+    for (let i = 0; i < meshes.length - 1; i++) {
+      for (let j = i + 1; j < meshes.length; j++) {
+        this.createJSONVertexWithOneCoordMesh(
+          meshes[i],
+          meshes[j],
+          vertexWithOneCoord,
+        )
+      }
     }
 
-    // console.log('vertexWithOneCoord', vertexWithOneCoord)
-    // console.log('vertexWithOneCoord', vertexWithOneCoord[0].indices)
-    // console.log('vertexWithOneCoord', vertexWithOneCoord[1].indices)
-    // console.log('vertexWithOneCoord', vertexWithOneCoord[2].indices)
-    // console.log('vertexWithOneCoord', vertexWithOneCoord[3].indices)
-    console.log(vertexWithOneCoord)
-    // let a = JSON.stringify(vertexWithOneCoord)
-    // console.log(a)
-    // let b = JSON.parse(a)
-    // console.log(b)
+    // for (let i = 0; i < meshes.length; i++) {
+    //   this.createJSONVertexWithOneCoordMesh(meshes[i], '', vertexWithOneCoord)
+    // }
+
+    console.log('vertexWithOneCoord', vertexWithOneCoord)
+
+    let a = JSON.stringify(vertexWithOneCoord)
+    console.log(a)
+    let b = JSON.parse(a)
+    console.log(b)
     return vertexWithOneCoord
   }
 }
