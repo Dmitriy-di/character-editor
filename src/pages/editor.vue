@@ -47,6 +47,7 @@
     <q-btn @click="changeModel">Увеличить</q-btn>
     <q-btn @click="rotateModel">Повернуть</q-btn>
     <q-btn @click="createJSON">Сформировать JSON</q-btn>
+    <q-btn @click="removeСracks;">Убрать трещины</q-btn>
 
     <div class="triangle_svg" ref="triangleContainer">
       <svg @mouseup="stopDrag" class="svg_triangle">
@@ -180,6 +181,10 @@ const createJSON = () => {
   characterModelGlob.value.createJSONVertexWithOneCoordModel(
     characterModelGlob.value.mCharacter
   );
+};
+
+const removeСracks = () => {
+  characterModelGlob.value.removeCracks(characterModelGlob.value.mCharacter);
 };
 
 const toggleGizmoManager = function (arrValues) {

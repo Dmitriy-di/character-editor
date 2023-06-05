@@ -412,6 +412,10 @@ export default class CharacterModel {
     }
   }
 
+  removeCracks(inMesh) {
+    let positions = inMesh.getVerticesData(VertexBuffer.PositionKind)
+  }
+
   // поиск вершин меша, имеющих одни и те же координаты
   createJSONVertexWithOneCoordMesh(inMesh = null, inMesh2 = null, parentMesh) {
     // const indicesModelInSphere = this.getIndicesVertexesModelInSphere(
@@ -496,7 +500,6 @@ export default class CharacterModel {
         )
         const distance = Vector3.DistanceSquared(posVertexI, posVertexJ)
         if (distance < 0.1 ** 10) {
-          let doubleNameMesh = inMesh.name + inMesh2.name
           if (i in indices) {
             // let sphere = Mesh.CreateSphere(`sphere`, 16, 0.01, this.mScene)
             // let material = new StandardMaterial(
